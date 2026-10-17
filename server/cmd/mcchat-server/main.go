@@ -9,6 +9,8 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
@@ -30,7 +32,8 @@ import (
 
 const usage = `usage:
   mcchat-server serve        [-config path]
-  mcchat-server token add    [-config path] <name>
+  mcchat-server token add    [-config path] [-hash hex] <name>
+  mcchat-server token gen
   mcchat-server token list   [-config path]
   mcchat-server token revoke [-config path] <id>
   mcchat-server keygen
@@ -63,6 +66,8 @@ func run(args []string) error {
 		switch args[1] {
 		case "add":
 			return tokenAdd(args[2:])
+		case "gen":
+			return tokenGen()
 		case "list":
 			return tokenList(args[2:])
 		case "revoke":
@@ -78,10 +83,13 @@ func run(args []string) error {
 }
 
 // parse handles the shared -config flag and returns the config and the
-// remaining positional arguments.
-func parse(name string, args []string) (config.Config, []string, error) {
+// remaining positional arguments. extra may register more flags.
+func parse(name string, args []string, extra ...func(*flag.FlagSet)) (config.Config, []string, error) {
 	fs := flag.NewFlagSet(name, flag.ExitOnError)
 	path := fs.String("config", "config.json", "config file (missing file = defaults)")
+	for _, f := range extra {
+		f(fs)
+	}
 	fs.Parse(args)
 	cfg, err := config.Load(*path)
 	return cfg, fs.Args(), err
@@ -129,8 +137,8 @@ func serve(args []string) error {
 	return nil
 }
 
-func openTokens(args []string, name string) (*store.Store, []string, error) {
-	cfg, rest, err := parse(name, args)
+func openTokens(args []string, name string, extra ...func(*flag.FlagSet)) (*store.Store, []string, error) {
+	cfg, rest, err := parse(name, args, extra...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -138,8 +146,13 @@ func openTokens(args []string, name string) (*store.Store, []string, error) {
 	return st, rest, err
 }
 
+// tokenAdd issues a token. With -hash, it registers a token generated
+// elsewhere (token gen) so the token itself never touches this host.
 func tokenAdd(args []string) error {
-	st, rest, err := openTokens(args, "token add")
+	var hashHex string
+	st, rest, err := openTokens(args, "token add", func(fs *flag.FlagSet) {
+		fs.StringVar(&hashHex, "hash", "", "register this SHA-256 hex (from `token gen`) instead of generating a token")
+	})
 	if err != nil {
 		return err
 	}
@@ -151,13 +164,34 @@ func tokenAdd(args []string) error {
 	if name == "" || name != rest[0] {
 		return fmt.Errorf("invalid name %q (max 16 chars, no control/§)", rest[0])
 	}
-	tok, hash := auth.NewToken()
+
+	var tok string
+	var hash []byte
+	if hashHex != "" {
+		hash, err = hex.DecodeString(hashHex)
+		if err != nil || len(hash) != sha256.Size {
+			return errors.New("-hash must be 64 hex characters")
+		}
+	} else {
+		tok, hash = auth.NewToken()
+	}
 	id, err := st.AddToken(context.Background(), name, hash)
 	if err != nil {
 		return err
 	}
+	if tok == "" {
+		fmt.Fprintf(os.Stderr, "registered token #%d for %q\n", id, name)
+		return nil
+	}
 	fmt.Fprintf(os.Stderr, "created token #%d for %q. It is shown only once:\n", id, name)
 	fmt.Println(tok)
+	return nil
+}
+
+// tokenGen prints a new token and its hash without touching any database.
+func tokenGen() error {
+	tok, hash := auth.NewToken()
+	fmt.Printf("token: %s\nhash:  %s\n", tok, hex.EncodeToString(hash))
 	return nil
 }
 

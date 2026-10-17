@@ -54,6 +54,10 @@ go run ./cmd/mcchat-cli -token mcc_... -channel mc.daruks.com
 
 ```sh
 mcchat-server token add <名前>    # 名前は表示名。16文字まで
+
+# トークンを VPS の画面や履歴に出したくない場合: 手元で生成してハッシュだけ登録
+mcchat-server token gen                       # (手元) token と hash を表示
+mcchat-server token add -hash <hash> <名前>    # (VPS)
 mcchat-server token list
 mcchat-server token revoke <id>   # 接続中のクライアントも次の送信で切断される
 ```
