@@ -1,6 +1,6 @@
 {
   "listen": "127.0.0.1:25566",
-  "db": "/var/lib/mcchat/mcchat.db",
+  "db": "mcchat.db",
   "history": 50,
   "maxRunes": 256,
   "rateBurst": 3,

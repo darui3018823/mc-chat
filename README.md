@@ -14,7 +14,7 @@ MC:JE + mcchat Mod ──wss──▶ Cloudflare ──▶ nginx ──▶ mccha
 |---|---|
 | `server/` | Go 製サーバー `mcchat-server` と動作確認用 `mcchat-cli` |
 | `mod/` | Fabric クライアント Mod（MC 1.21.11 / Fabric API 0.141+ / Java 21） |
-| `deploy/` | nginx・systemd 設定とデプロイスクリプト |
+| `deploy/` | VPS 用セットアップスクリプトと nginx 設定 |
 
 ## Mod の使い方
 
@@ -60,21 +60,25 @@ mcchat-server token revoke <id>   # 接続中のクライアントも次の送�
 
 ### デプロイ（VPS）
 
-前提: Cloudflare プロキシ（SSL Full）、Origin 証明書が `/etc/ssl/certs/cf.crt` / `/etc/ssl/private/cf.key` にあること、Cloudflare の WebSockets が有効なこと。
+前提: Go・pwsh・nginx、Cloudflare プロキシ（SSL Full）、Origin 証明書 `/etc/ssl/certs/cf.crt` / `/etc/ssl/private/cf.key`、Cloudflare の WebSockets 有効。
 
-```powershell
-./deploy/setup.ps1 -Target root@<vps>                    # ビルド・転送・インストール・再起動
-./deploy/setup.ps1 -Target root@<vps> -AddToken alice    # トークン発行
+リポジトリを `/root/projects/mcchat` に置いて、VPS 上で実行する（再実行可）:
+
+```sh
+cd /root/projects/mcchat
+pwsh ./deploy/setup.ps1                 # ビルド → systemd(mcchat) 登録・再起動 → nginx サイト配置・reload
+./mcchat-server token add <名前>         # トークン発行
+journalctl -u mcchat -f                 # ログ
 ```
 
-初回は `/etc/mcchat/mcchat.env` に暗号鍵が生成される。**このファイルを必ずバックアップすること**（失うと保存済みメッセージは復号できない）。
+初回は `.env` に暗号鍵が生成される。**このファイルを必ずバックアップすること**（失うと保存済みメッセージは復号できない）。
 
-| パス | 用途 |
+| パス（`/root/projects/mcchat/`） | 用途 |
 |---|---|
-| `/opt/mcchat/mcchat-server` | バイナリ |
-| `/etc/mcchat/config.json` | 設定（初回のみ example からコピー） |
-| `/etc/mcchat/mcchat.env` | `MCCHAT_KEY`（root 0600） |
-| `/var/lib/mcchat/mcchat.db` | SQLite |
+| `mcchat-server` | バイナリ |
+| `config.json` | 設定（初回のみ example からコピー） |
+| `.env` | `MCCHAT_KEY`（0600） |
+| `mcchat.db` | SQLite |
 
 鍵の入れ替え: 新しい鍵を `MCCHAT_KEY`・新しい `MCCHAT_KEY_ID` に設定し、旧鍵を `MCCHAT_OLD_KEYS="1:<旧鍵>"` に移す。
 

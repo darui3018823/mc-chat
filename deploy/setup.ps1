@@ -1,57 +1,111 @@
-#Requires -Version 7
-<#
-.SYNOPSIS
-    Build mcchat-server for Linux and install it on the VPS.
+#Requires -Version 7.0
+# setup.ps1: Build and install mcchat-server on the VPS.
+# Run on the Linux host from the repository, e.g. /root/projects/mcchat:
+#
+#   pwsh ./deploy/setup.ps1
+#
+# Safe to re-run: config.json and .env are only created when missing.
 
-.EXAMPLE
-    ./deploy/setup.ps1 -Target root@<vps-ip>
-
-.EXAMPLE
-    # Issue a token for a friend after deployment
-    ./deploy/setup.ps1 -Target root@<vps-ip> -AddToken alice
-#>
+[CmdletBinding()]
 param(
-    [Parameter(Mandatory)] [string] $Target,
-    [string] $Key = "$HOME/.ssh/id_ed25519",
-    [string] $AddToken
+    # The name for the systemd service.
+    [string]$ServiceName = "mcchat",
+
+    # The public hostname served by nginx.
+    [string]$Domain = "mcchat.daruks.com",
+
+    # Skip installing the nginx site.
+    [switch]$SkipNginx
 )
 
-$ErrorActionPreference = 'Stop'
-$root = Split-Path -Parent $PSScriptRoot
-$ssh = @('-i', $Key, '-o', 'BatchMode=yes')
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
 
-if ($AddToken) {
-    if ($AddToken -notmatch '^[\p{L}\p{N}_.-]{1,16}$') { throw "invalid name: $AddToken" }
-    # Runs as the service user so the database stays owned by it.
-    ssh @ssh $Target "runuser -u mcchat -- /opt/mcchat/mcchat-server token add -config /etc/mcchat/config.json '$AddToken'"
-    exit $LASTEXITCODE
+if ($IsWindows) {
+    throw "This script is intended to run on the Linux host."
 }
 
-$stage = Join-Path ([IO.Path]::GetTempPath()) "mcchat-deploy-$([Guid]::NewGuid().ToString('N'))"
-New-Item -ItemType Directory $stage | Out-Null
+# The repository root (this script lives in ./deploy).
+$AppDirectory = Split-Path -Parent $PSScriptRoot
+$ExecPath = Join-Path $AppDirectory "mcchat-server"
+$ConfigPath = Join-Path $AppDirectory "config.json"
+$EnvPath = Join-Path $AppDirectory ".env"
+
+function Invoke-Checked([string]$What, [scriptblock]$Block) {
+    & $Block
+    if ($LASTEXITCODE) { throw "$What failed (exit $LASTEXITCODE)" }
+}
+
+Write-Host "==> Building mcchat-server" -ForegroundColor Cyan
+Push-Location (Join-Path $AppDirectory "server")
 try {
-    Push-Location (Join-Path $root 'server')
-    try {
-        $env:GOOS = 'linux'; $env:GOARCH = 'amd64'; $env:CGO_ENABLED = '0'
-        go build -trimpath -ldflags '-s -w' -o (Join-Path $stage 'mcchat-server') ./cmd/mcchat-server
-        if ($LASTEXITCODE) { throw 'go build failed' }
-    } finally {
-        Remove-Item Env:GOOS, Env:GOARCH, Env:CGO_ENABLED -ErrorAction SilentlyContinue
-        Pop-Location
-    }
-
-    Copy-Item (Join-Path $root 'server/config.example.json') $stage
-    Copy-Item (Join-Path $root 'deploy/systemd/mcchat.service') $stage
-    Copy-Item (Join-Path $root 'deploy/nginx/mcchat.daruks.com.conf') $stage
-    Copy-Item (Join-Path $root 'deploy/remote-install.sh') $stage
-
-    $remote = "/tmp/mcchat-deploy-$([Guid]::NewGuid().ToString('N'))"
-    ssh @ssh $Target "install -d -m 0700 $remote"
-    if ($LASTEXITCODE) { throw 'ssh failed' }
-    scp -i $Key -o BatchMode=yes -q (Get-ChildItem $stage).FullName "${Target}:$remote/"
-    if ($LASTEXITCODE) { throw 'scp failed' }
-    ssh @ssh $Target "bash $remote/remote-install.sh $remote"
-    if ($LASTEXITCODE) { throw 'remote install failed' }
+    Invoke-Checked "go build" { go build -trimpath -o $ExecPath ./cmd/mcchat-server }
 } finally {
-    Remove-Item -Recurse -Force $stage
+    Pop-Location
 }
+
+if (-not (Test-Path $ConfigPath)) {
+    Copy-Item (Join-Path $AppDirectory "server/config.example.json") $ConfigPath
+    Write-Host "    Created $ConfigPath"
+}
+
+if (-not (Test-Path $EnvPath)) {
+    $key = & $ExecPath keygen
+    "MCCHAT_KEY=$key`nMCCHAT_KEY_ID=1`n" | Set-Content -Path $EnvPath -NoNewline
+    chmod 600 $EnvPath
+    Write-Host "    Generated $EnvPath -- BACK IT UP (stored messages are unreadable without it)" -ForegroundColor Yellow
+}
+
+Write-Host "==> Installing systemd service '$ServiceName'" -ForegroundColor Cyan
+$ServiceFileContent = @"
+[Unit]
+Description=mcchat server ($ServiceName)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=$AppDirectory
+EnvironmentFile=$EnvPath
+ExecStart=$ExecPath serve -config $ConfigPath
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+"@
+$ServiceFileContent | Set-Content -Path "/etc/systemd/system/$ServiceName.service"
+Invoke-Checked "daemon-reload" { systemctl daemon-reload }
+Invoke-Checked "enable" { systemctl enable $ServiceName }
+Invoke-Checked "restart" { systemctl restart $ServiceName }
+
+if (-not $SkipNginx) {
+    Write-Host "==> Installing nginx site '$Domain'" -ForegroundColor Cyan
+    $site = "/etc/nginx/sites-available/$Domain"
+    (Get-Content -Raw (Join-Path $PSScriptRoot "nginx/mcchat.daruks.com.conf")).Replace("mcchat.daruks.com", $Domain) |
+        Set-Content -Path $site -NoNewline
+    Invoke-Checked "ln" { ln -sf $site "/etc/nginx/sites-enabled/$Domain" }
+    Invoke-Checked "nginx -t" { nginx -t }
+    Invoke-Checked "nginx reload" { systemctl reload nginx }
+}
+
+Start-Sleep -Seconds 1
+Write-Host "==> Health check" -ForegroundColor Cyan
+$listen = (Get-Content -Raw $ConfigPath | ConvertFrom-Json).listen
+if (-not $listen) { $listen = "127.0.0.1:25566" }
+try {
+    $r = Invoke-WebRequest -Uri "http://$listen/healthz" -TimeoutSec 5
+    Write-Host "    $($r.StatusCode) $($r.Content.Trim())" -ForegroundColor Green
+} catch {
+    Write-Host "    health check failed: $_" -ForegroundColor Red
+    systemctl --no-pager status $ServiceName
+    exit 1
+}
+
+Write-Host ""
+Write-Host "----------------- Next Steps -----------------" -ForegroundColor Yellow
+Write-Host "Issue a token (run in $AppDirectory):"
+Write-Host "   ./mcchat-server token add <name>"
+Write-Host "Logs:"
+Write-Host "   journalctl -u $ServiceName -f"
+Write-Host "----------------------------------------------"

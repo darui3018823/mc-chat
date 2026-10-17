@@ -1,4 +1,7 @@
-# server
+# server (deploy/setup.ps1 puts these in the repo root on the VPS)
+/mcchat-server
+/config.json
+/.env
 *.db
 *.db-wal
 *.db-shm
