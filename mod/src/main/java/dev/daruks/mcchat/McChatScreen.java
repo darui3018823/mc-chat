@@ -19,6 +19,8 @@ public final class McChatScreen extends Screen {
 	private static final int INPUT_HEIGHT = 12;
 	// Colors must include alpha since 1.21.6.
 	private static final int BG = 0x90000000;
+	// Nearly opaque so the vanilla chat HUD and hotbar underneath do not show through.
+	private static final int PANEL = 0xE0000000;
 	private static final int TEXT = 0xFFFFFFFF;
 	private static final int DIM = 0xFFAAAAAA;
 
@@ -82,11 +84,18 @@ public final class McChatScreen extends Screen {
 		for (ChatConnection.Message m : log.lines()) {
 			wrapped.addAll(font.split(ChatLog.format(m), textWidth));
 		}
-		int y = height - INPUT_HEIGHT - MARGIN * 2 - font.lineHeight;
+		int step = font.lineHeight + 1;
+		int bottom = height - INPUT_HEIGHT - MARGIN * 2 - font.lineHeight;
 		int top = MARGIN * 2 + font.lineHeight;
-		for (int i = wrapped.size() - 1; i >= 0 && y >= top; i--) {
+		int shown = Math.min(wrapped.size(), (bottom - top) / step + 1);
+		if (shown > 0) {
+			int panelTop = bottom - (shown - 1) * step - 2;
+			g.fill(0, panelTop, width, height - INPUT_HEIGHT - MARGIN - 1, PANEL);
+		}
+		int y = bottom;
+		for (int i = wrapped.size() - 1; i >= wrapped.size() - shown; i--) {
 			g.drawString(font, wrapped.get(i), MARGIN, y, TEXT, true);
-			y -= font.lineHeight + 1;
+			y -= step;
 		}
 	}
 

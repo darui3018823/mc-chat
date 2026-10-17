@@ -9,6 +9,21 @@ base {
 	archivesName = 'mcchat'
 }
 
+loom {
+	runs {
+		client {
+			// Offline dev client, e.g.:
+			//   ./gradlew runClient -PmcUser=Tester -PquickPlay=127.0.0.1
+			if (project.hasProperty('mcUser')) {
+				programArgs '--username', project.property('mcUser').toString()
+			}
+			if (project.hasProperty('quickPlay')) {
+				programArgs '--quickPlayMultiplayer', project.property('quickPlay').toString()
+			}
+		}
+	}
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings loom.officialMojangMappings()
