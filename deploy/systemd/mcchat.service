@@ -1,0 +1,42 @@
+[Unit]
+Description=mcchat server (chat backend for the mcchat Minecraft mod)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=exec
+User=mcchat
+Group=mcchat
+WorkingDirectory=/var/lib/mcchat
+
+# MCCHAT_KEY (and optionally MCCHAT_KEY_ID / MCCHAT_OLD_KEYS). Back this file up:
+# without the key, stored messages cannot be decrypted.
+EnvironmentFile=/etc/mcchat/mcchat.env
+ExecStart=/opt/mcchat/mcchat-server serve -config /etc/mcchat/config.json
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+UMask=0077
+
+StateDirectory=mcchat
+StateDirectoryMode=0700
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target
