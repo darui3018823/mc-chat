@@ -1,0 +1,20 @@
+# server
+*.db
+*.db-wal
+*.db-shm
+*.exe
+/server/mcchat-server
+/server/mcchat-cli
+/server/config.json
+
+# mod (Gradle / Loom)
+/mod/.gradle/
+/mod/build/
+/mod/run/
+/mod/out/
+/mod/bin/
+
+# IDE
+.idea/
+.vscode/
+*.iml

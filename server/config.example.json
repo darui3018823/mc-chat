@@ -1,0 +1,11 @@
+{
+  "listen": "127.0.0.1:25566",
+  "db": "/var/lib/mcchat/mcchat.db",
+  "history": 50,
+  "maxRunes": 256,
+  "rateBurst": 3,
+  "ratePerSec": 1,
+  "aliases": {
+    "play.daruks.com": "mc.daruks.com"
+  }
+}
