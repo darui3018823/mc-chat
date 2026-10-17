@@ -1,0 +1,20 @@
+{
+	"key.mcchat.open": "Open MCChat",
+	"key.category.mcchat.main": "MCChat",
+	"mcchat.screen.title": "MCChat",
+	"mcchat.screen.input": "Message",
+	"mcchat.screen.status": "%s | channel: %s | you: %s | Enter: send, Esc: close",
+	"mcchat.status.idle": "Not connected",
+	"mcchat.status.connecting": "Connecting...",
+	"mcchat.status.connected": "Connected",
+	"mcchat.status.reconnecting": "Reconnecting...",
+	"mcchat.status.auth_failed": "Authentication failed. Check the token in config/mcchat.json.",
+	"mcchat.status.revoked": "Your token was revoked.",
+	"mcchat.status.lost": "Connection lost. Reconnecting...",
+	"mcchat.status.reconnected": "Reconnected.",
+	"mcchat.error.rate_limited": "You are sending too fast.",
+	"mcchat.error.not_connected": "Not connected to MCChat.",
+	"mcchat.error.no_token": "No token set. Put your token in %s and rejoin.",
+	"mcchat.error.bad_url": "Invalid serverUrl: %s",
+	"mcchat.error.other": "Server error: %s"
+}

@@ -1,0 +1,20 @@
+{
+	"key.mcchat.open": "MCChatを開く",
+	"key.category.mcchat.main": "MCChat",
+	"mcchat.screen.title": "MCChat",
+	"mcchat.screen.input": "メッセージ",
+	"mcchat.screen.status": "%s | チャンネル: %s | 名前: %s | Enter: 送信 / Esc: 閉じる",
+	"mcchat.status.idle": "未接続",
+	"mcchat.status.connecting": "接続中…",
+	"mcchat.status.connected": "接続済み",
+	"mcchat.status.reconnecting": "再接続中…",
+	"mcchat.status.auth_failed": "認証に失敗しました。config/mcchat.json のトークンを確認してください。",
+	"mcchat.status.revoked": "トークンが無効化されました。",
+	"mcchat.status.lost": "切断されました。再接続しています…",
+	"mcchat.status.reconnected": "再接続しました。",
+	"mcchat.error.rate_limited": "送信が速すぎます。",
+	"mcchat.error.not_connected": "MCChatに接続されていません。",
+	"mcchat.error.no_token": "トークンが未設定です。%s に設定してから入り直してください。",
+	"mcchat.error.bad_url": "serverUrl が不正です: %s",
+	"mcchat.error.other": "サーバーエラー: %s"
+}
