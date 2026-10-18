@@ -193,7 +193,7 @@ public final class McChatClient implements ClientModInitializer {
 				ChatFormatting.GREEN);
 	}
 
-	/** /font system [<file name>]: lists OS fonts, or installs one and switches to it. */
+	/** /font system [<file name> [glyph size]]: lists OS fonts, or installs one and switches to it. */
 	private static void systemFontCommand(String[] args) {
 		if (args.length < 3) {
 			Map<String, Path> fonts = SystemFonts.list();
@@ -205,6 +205,15 @@ public final class McChatClient implements ClientModInitializer {
 			LOG_STATE.notice(Component.translatable("mcchat.command.font.system.missing", args[2]), ChatFormatting.YELLOW);
 			return;
 		}
+		if (args.length >= 4) {
+			float glyph = parseFloat(args[3]);
+			if (glyph < 4 || glyph > 32) {
+				LOG_STATE.notice(Component.translatable("mcchat.command.font.system.glyph", config.systemFontSize),
+						ChatFormatting.YELLOW);
+				return;
+			}
+			config.systemFontSize = glyph;
+		}
 		config.systemFont = file.getFileName().toString();
 		config.font = SystemFonts.FONT_ID;
 		config.save();
@@ -212,27 +221,30 @@ public final class McChatClient implements ClientModInitializer {
 		installSystemFont(file);
 	}
 
-	/** /font size <n>: glyph size of the OS font. */
+	/** /font size <percent>: text size of the mcchat screen log, for any font. */
 	private static void fontSizeCommand(String[] args) {
-		float size;
-		try {
-			size = args.length >= 3 ? Float.parseFloat(args[2]) : -1;
-		} catch (NumberFormatException e) {
-			size = -1;
-		}
-		if (size < 4 || size > 32) {
-			LOG_STATE.notice(Component.translatable("mcchat.command.font.size.usage", config.systemFontSize),
+		int pct = args.length >= 3 ? Math.round(parseFloat(args[2].replace("%", ""))) : -1;
+		if (pct < McChatConfig.MIN_SCALE || pct > McChatConfig.MAX_SCALE) {
+			LOG_STATE.notice(Component.translatable("mcchat.command.font.size.usage", config.textScale),
 					ChatFormatting.YELLOW);
 			return;
 		}
-		config.systemFontSize = size;
+		config.textScale = pct;
 		config.save();
-		Path file = config.systemFont.isEmpty() ? null : SystemFonts.find(config.systemFont);
-		if (file == null) {
-			LOG_STATE.notice(Component.translatable("mcchat.command.font.size.set", size), ChatFormatting.GREEN);
-			return;
+		LOG_STATE.notice(Component.translatable("mcchat.command.font.size.set", pct), ChatFormatting.GREEN);
+	}
+
+	private static float parseFloat(String s) {
+		try {
+			return Float.parseFloat(s);
+		} catch (NumberFormatException e) {
+			return -1;
 		}
-		installSystemFont(file);
+	}
+
+	/** Scale factor for the mcchat screen log. */
+	public static float textScale() {
+		return config.textScale / 100f;
 	}
 
 	private static void installSystemFont(Path file) {

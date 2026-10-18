@@ -14,6 +14,8 @@ import net.fabricmc.loader.api.FabricLoader;
 
 /** config/mcchat.json. Re-read every time a server is joined. */
 public final class McChatConfig {
+	public static final int MIN_SCALE = 50;
+	public static final int MAX_SCALE = 200;
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
 	/** WebSocket endpoint of mcchat-server. */
@@ -38,6 +40,8 @@ public final class McChatConfig {
 	/** Glyph size and oversampling for the OS font (resource pack ttf provider values). */
 	public float systemFontSize = 11;
 	public float systemFontOversample = 4;
+	/** Text size of the mcchat screen log in percent, any font. Set with /font size. */
+	public int textScale = 100;
 
 	public static Path path() {
 		return FabricLoader.getInstance().getConfigDir().resolve("mcchat.json");
@@ -85,6 +89,7 @@ public final class McChatConfig {
 		if (systemFont == null) systemFont = "";
 		if (systemFontSize <= 0) systemFontSize = 11;
 		if (systemFontOversample <= 0) systemFontOversample = 4;
+		if (textScale < MIN_SCALE || textScale > MAX_SCALE) textScale = 100;
 		font = font.trim();
 		serverUrl = serverUrl.trim();
 		token = token.trim();

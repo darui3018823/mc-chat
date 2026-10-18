@@ -33,7 +33,7 @@
 	"mcchat.command.dict.missing": "辞書にありません: %s",
 	"mcchat.command.dict.empty": "辞書は空です。",
 	"mcchat.command.dict.header": "辞書（%s 件）",
-	"mcchat.command.font.current": "フォント: %s（/font default | uniform | system <名前> | size <大きさ> | <名前空間:ID>）",
+	"mcchat.command.font.current": "フォント: %s（/font default | uniform | system <名前> [元の大きさ] | size <%%> | <名前空間:ID>）",
 	"mcchat.command.font.set": "フォントを変更しました: %s",
 	"mcchat.command.font.invalid": "フォント ID が不正です: %s",
 	"mcchat.suggest.dict.add": "<語> <置き換え> 辞書に登録（例: maikura マイクラ）",
@@ -46,9 +46,10 @@
 	"mcchat.command.font.system.missing": "フォントが見つからないか、候補が複数あります: %s",
 	"mcchat.command.font.system.loading": "フォントを読み込み中: %s（リソースを再読み込みします）",
 	"mcchat.command.font.system.failed": "フォントを読み込めませんでした: %s",
-	"mcchat.command.font.size.usage": "使い方: /font size <4〜32>（今: %s）",
-	"mcchat.command.font.size.set": "PC フォントの大きさ: %s",
-	"mcchat.suggest.font.system": "<ファイル名> PC に入っているフォントを使う",
-	"mcchat.suggest.font.size": "<大きさ> PC フォントの大きさ（既定 11）",
-	"mcchat.suggest.font.file": "PC のフォント"
+	"mcchat.command.font.size.usage": "使い方: /font size <50〜200>（Y の画面の文字の大きさ %%。今: %s%%）",
+	"mcchat.command.font.size.set": "Y の画面の文字の大きさ: %s%%",
+	"mcchat.suggest.font.system": "<ファイル名> [元の大きさ] PC に入っているフォントを使う",
+	"mcchat.suggest.font.size": "<50〜200> Y の画面の文字の大きさ（%%）",
+	"mcchat.suggest.font.file": "PC のフォント",
+	"mcchat.command.font.system.glyph": "PC フォントの元の大きさは 4〜32 で指定してください（今: %s）"
 }

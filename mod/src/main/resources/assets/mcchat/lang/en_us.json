@@ -33,7 +33,7 @@
 	"mcchat.command.dict.missing": "Not in dictionary: %s",
 	"mcchat.command.dict.empty": "The dictionary is empty.",
 	"mcchat.command.dict.header": "Dictionary (%s entries)",
-	"mcchat.command.font.current": "Font: %s (/font default | uniform | system <name> | size <n> | <namespace:id>)",
+	"mcchat.command.font.current": "Font: %s (/font default | uniform | system <name> [glyph size] | size <%%> | <namespace:id>)",
 	"mcchat.command.font.set": "Font changed: %s",
 	"mcchat.command.font.invalid": "Invalid font id: %s",
 	"mcchat.suggest.dict.add": "<word> <replacement> add to dictionary (e.g. maikura マイクラ)",
@@ -46,9 +46,10 @@
 	"mcchat.command.font.system.missing": "Font not found or ambiguous: %s",
 	"mcchat.command.font.system.loading": "Loading font %s (reloading resources)",
 	"mcchat.command.font.system.failed": "Could not load the font: %s",
-	"mcchat.command.font.size.usage": "Usage: /font size <4-32> (now %s)",
-	"mcchat.command.font.size.set": "OS font size: %s",
-	"mcchat.suggest.font.system": "<file name> use a font installed on this PC",
-	"mcchat.suggest.font.size": "<n> size of the OS font (default 11)",
-	"mcchat.suggest.font.file": "font on this PC"
+	"mcchat.command.font.size.usage": "Usage: /font size <50-200> (text size of the mcchat screen in %%, now %s%%)",
+	"mcchat.command.font.size.set": "mcchat screen text size: %s%%",
+	"mcchat.suggest.font.system": "<file name> [glyph size] use a font installed on this PC",
+	"mcchat.suggest.font.size": "<50-200> text size of the mcchat screen (%%)",
+	"mcchat.suggest.font.file": "font on this PC",
+	"mcchat.command.font.system.glyph": "The OS font glyph size must be 4-32 (now %s)"
 }

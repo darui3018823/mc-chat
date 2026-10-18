@@ -226,15 +226,22 @@ public final class McChatScreen extends Screen {
 		g.fill(0, 0, font.width(status) + MARGIN * 2, font.lineHeight + MARGIN * 2, BG);
 		g.drawString(font, status, MARGIN, MARGIN, DIM, false);
 
+		// The log is drawn scaled by /font size; coordinates below are in scaled units.
+		float k = McChatClient.textScale();
+		int inputTop = (int) ((height - INPUT_HEIGHT - MARGIN) / k);
+		int statusBottom = (int) ((font.lineHeight + MARGIN * 2) / k);
+		g.pose().pushMatrix();
+		g.pose().scale(k, k);
+
 		// Lines are drawn bottom-up above the input box, newest at the bottom.
-		int textWidth = Math.min(width - MARGIN * 2, MAX_TEXT_WIDTH);
+		int textWidth = (int) (Math.min(width - MARGIN * 2, MAX_TEXT_WIDTH) / k);
 		List<FormattedCharSequence> wrapped = new ArrayList<>();
 		for (Component line : log.lines()) {
 			wrapped.addAll(font.split(McChatClient.withFont(line), textWidth));
 		}
 		int step = font.lineHeight + 1;
-		int bottom = height - INPUT_HEIGHT - MARGIN * 2 - font.lineHeight;
-		int top = MARGIN * 3 + font.lineHeight;
+		int bottom = inputTop - MARGIN - font.lineHeight;
+		int top = statusBottom + MARGIN;
 		// A recent notice (e.g. rate limited) takes the line right above the input.
 		Component notice = log.recentNotice();
 		int noticeY = bottom;
@@ -247,7 +254,7 @@ public final class McChatScreen extends Screen {
 		int shown = Math.min(end, capacity);
 		if (shown > 0 || notice != null) {
 			int panelTop = (shown > 0 ? bottom - (shown - 1) * step : noticeY) - 2;
-			g.fill(0, panelTop, textWidth + MARGIN * 2, height - INPUT_HEIGHT - MARGIN - 1, BG);
+			g.fill(0, panelTop, textWidth + MARGIN * 2, inputTop - 1, BG);
 		}
 		if (notice != null) g.drawString(font, McChatClient.withFont(notice), MARGIN, noticeY, TEXT, true);
 		int y = bottom;
@@ -259,6 +266,7 @@ public final class McChatScreen extends Screen {
 			Component more = Component.translatable("mcchat.screen.scrolled", scroll);
 			g.drawString(font, more, textWidth + MARGIN - font.width(more), bottom, DIM, true);
 		}
+		g.pose().popMatrix();
 		renderSuggestions(g);
 	}
 
