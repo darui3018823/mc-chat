@@ -1,0 +1,30 @@
+MCChat
+Copyright (c) 2026 darui3018823
+
+This project is licensed under the MIT License.
+See the LICENSE file for details.
+
+-------------------------------------------------------------------------------
+
+THIRD-PARTY NOTICES
+
+Minecraft is a trademark of Mojang Studios / Microsoft. This project is an
+unofficial mod and is not affiliated with, endorsed by, or sponsored by
+Mojang Studios or Microsoft.
+
+The mod uses Google's transliteration service to convert romaji to Japanese.
+Text sent with romaji conversion enabled is sent to Google.
+
+-------------------------------------------------------------------------------
+
+This project uses the following open-source software:
+
+  Fabric Loader, Fabric API, Fabric Loom
+    https://fabricmc.net/
+    License: Apache License 2.0
+
+  github.com/coder/websocket
+    License: ISC License
+
+  modernc.org/sqlite
+    License: BSD 3-Clause License

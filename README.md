@@ -1,160 +1,108 @@
-# mc-chat
+# MCChat
 
-ゲーム内チャットとは別経路で、Mod を入れた仲間同士がチャットするための仕組み。
+Out-of-game chat for Minecraft: Java Edition — talk with friends who have the mod, even when in-game chat is unavailable to them.
 
 ```
-MC:JE + mcchat Mod ──wss──▶ Cloudflare ──▶ nginx ──▶ mcchat-server (127.0.0.1:25566) + SQLite
+MC:JE + MCChat mod ──wss──▶ Cloudflare ──▶ nginx ──▶ mcchat-server + SQLite
 ```
 
-- チャンネルは「接続中の Minecraft サーバーアドレス」。`mc.daruks.com` にいる人同士だけで会話する
-- 認証は管理者が発行するトークン（DB には SHA-256 のみ保存）
-- メッセージ本文は AES-256-GCM で暗号化して保存（鍵は `MCCHAT_KEY`）
+> **Japanese** — [日本語版はこちら](./japanese/README.md)
 
-| ディレクトリ | 内容 |
-|---|---|
-| `server/` | Go 製サーバー `mcchat-server` と動作確認用 `mcchat-cli` |
-| `mod/` | Fabric クライアント Mod（MC 1.21.11 / Fabric API 0.141+ / Java 21） |
-| `deploy/` | VPS 用セットアップスクリプトと nginx 設定 |
+---
 
-## Mod の使い方
+## Features
 
-1. [Releases](https://github.com/darui3018823/mc-chat/releases) から `mcchat-<version>.jar` を取得し、Fabric API と一緒に `mods/` へ入れる（Meteor と併用可）
-2. 一度起動すると `config/mcchat.json` ができるので、`token` に発行されたトークンを書く
+- **Separate chat path** — messages never go through vanilla chat, so they work even when in-game chat is restricted
+- **Per-server channels** — you only talk with people connected to the same Minecraft server address
+- **Chat window** — open with **Y**: log with scrolling, send history (↑↓), and command suggestions (Tab)
+- **Romaji to Japanese (Japanize)** — LunaChat-style conversion: `ohayou` → `ohayou (おはよう)`, with a personal dictionary
+- **Fonts** — Unifont, resource-pack fonts, or fonts installed on your PC, plus adjustable text size
+- **Token auth** — tokens are issued by the admin; the server stores only their SHA-256 hashes
+- **Encrypted storage** — message bodies are stored with AES-256-GCM
+
+---
+
+## Install
+
+### Requirements
+
+- Minecraft: Java Edition **1.21.11**
+- Fabric Loader 0.18+ and **Fabric API** 0.141+
+- Java 21+
+- A token from the admin
+
+Works alongside Meteor Client.
+
+### Setup
+
+1. Download `mcchat-<version>.jar` from [Releases](https://github.com/darui3018823/mc-chat/releases) and put it in `mods/` together with Fabric API
+2. Launch the game once — `config/mcchat.json` is created
+3. Write your token into `token`:
    ```json
    {
      "serverUrl": "wss://mcchat.daruks.com/ws",
-     "token": "mcc_...",
-     "showInChatHud": true,
-     "channelOverride": "",
-     "japanize": true,
-     "dictionary": {},
-     "font": ""
+     "token": "mcc_..."
    }
    ```
-3. サーバーに入ると自動接続。**Y キー**（操作設定で変更可）でチャット画面を開き、Enter で送信
-   - 受信内容はチャット欄にも `[MCChat][2026/10/18 12:00] 名前: 本文` で表示される（日時は PC のタイムゾーン）
-   - Y の画面: ↑↓ で送信履歴、ホイール / PageUp・PageDown でログをスクロール、Esc は入力中なら入力を消し、空なら閉じる
-   - 過去ログ（直近 50 件）は Y の画面でだけ見られる。チャット欄には流さない（再接続時は切断中に届いた分だけ流す）
-   - バニラのチャットが使える人は `/mcc 本文` でも送れる
-   - 設定ファイルはサーバーに入るたびに読み直す
+4. Join a server. MCChat connects automatically; press **Y** to open the chat window
 
-### ローマ字変換（Japanize）
+> Usage, commands, Japanize, dictionary, fonts, and every config field: **[docs/USAGE.md](./docs/USAGE.md)**.
 
-LunaChat と同じく、ローマ字で打った文を日本語に変換して送る。`ohayougozaimasu!` は `ohayougozaimasu! (おはようございます！)` になる。
+---
 
-- Y の画面（または `/mcc /japanize`）で `/japanize` を打つとオン・オフが切り替わる。`/japanize on|off` も可。設定は `japanize` に保存される（既定はオン）
-- 漢字への変換には Google の変換 API を使う（送る文が Google に送られる）。失敗したときはひらがなのまま送る
-- 日本語を含む文は変換しない。単語ごとに判定し、ローマ字として読めない単語（`Google`、`OK`）・全部大文字の単語・URL はそのまま残す
-- `/jp <文>` は判定を無視してまるごと変換して送る（`/japanize` がオフでも変換する）
-- Y の画面で `/` を打つとコマンドの候補が出る。Tab で補完
-- `/` で始まる文を送りたいときは `//` と書く
+## Server
 
-### 辞書
-
-ローマ字変換のときに、登録した語を決まった文字に置き換える（LunaChat の辞書と同じ）。各自の `config/mcchat.json` の `dictionary` に保存される。
-
-```
-/dict add maikura マイクラ     # kyou maikura yarou → kyou maikura yarou (今日マイクラやろう)
-/dict remove maikura
-/dict list
-```
-
-語は大文字・小文字を区別せず、文中のどこにあっても置き換わる（長い語が優先）。
-
-### フォント
-
-`/font uniform` で Unifont、`/font default` で標準に戻す。MCChat の行（Y の画面・チャット欄）にだけ効く。
-
-`/font size <50〜200>` で Y の画面の文字の大きさ（%）を変えられる。どのフォントでも効く。チャット欄の大きさはバニラの「チャット設定 → 文字の大きさ」に従う。
-
-PC に入っているフォント（`C:\Windows\Fonts` など）は `/font system <ファイル名>` で使える（例: `/font system meiryo`、`/font system yugothm`）。`/font system ` まで打つと候補が出る。
-
-- Mod が `resourcepacks/mcchat-system-font` にフォントをコピーしたリソースパックを作って有効化し、リソースを再読み込みする（数秒かかる）
-- `.ttc` はコレクションの最初のフォントが使われる
-- フォント自体の大きさは `/font system <ファイル名> <4〜32>`（既定 11）。チャット欄にも効く。ほかに `config/mcchat.json` の `systemFontOversample`（既定 4、大きいほどくっきり）
-- 戻すときは `/font default`。パックはリソースパック画面から外せる
-
-リソースパックのフォントも `/font <名前空間:ID>` で使える。たとえば TTF を使うなら、リソースパックに次の2つを入れて `/font mypack:chat` とする。
-
-```
-assets/mypack/font/chat.json:
-  {"providers": [{"type": "ttf", "file": "mypack:chat.ttf", "size": 11, "oversample": 2, "shift": [0, 0]}]}
-assets/mypack/font/chat.ttf
-```
-
-存在しない ID を指定すると文字が表示されなくなるので、`/font default` で戻す。
-
-`channelOverride` を設定すると、シングルプレイを含むどのワールドでもそのチャンネルを使う（テスト用）。
-
-## サーバー
-
-### ローカルで動かす
+The Go server (`server/`) runs behind Cloudflare and nginx on a VPS, listening on `127.0.0.1:25566`.
 
 ```sh
 cd server
 export MCCHAT_KEY=$(go run ./cmd/mcchat-server keygen)
-go run ./cmd/mcchat-server token add alice       # トークンが一度だけ表示される
-go run ./cmd/mcchat-server serve                 # 127.0.0.1:25566
-go run ./cmd/mcchat-cli -token mcc_... -channel mc.daruks.com
+go run ./cmd/mcchat-server token add alice   # prints the token once
+go run ./cmd/mcchat-server serve
 ```
 
-設定は `-config config.json`（無ければ既定値）。項目は `server/config.example.json` を参照。
-`aliases` で別名アドレスを同じチャンネルにまとめられる。
+> Configuration, token management, and VPS deployment: **[docs/SERVER.md](./docs/SERVER.md)**.
 
-### トークン管理
+---
 
-```sh
-mcchat-server token add <名前>    # 名前は表示名。16文字まで
+## Development
 
-# トークンを VPS の画面や履歴に出したくない場合: 手元で生成してハッシュだけ登録
-mcchat-server token gen                       # (手元) token と hash を表示
-mcchat-server token add -hash <hash> <名前>    # (VPS)
-mcchat-server token list
-mcchat-server token revoke <id>   # 接続中のクライアントも次の送信で切断される
-```
+### Requirements
 
-### デプロイ（VPS）
-
-前提: Go・pwsh・nginx、Cloudflare プロキシ（SSL Full）、Origin 証明書 `/etc/ssl/certs/cf.crt` / `/etc/ssl/private/cf.key`、Cloudflare の WebSockets 有効。
-
-リポジトリを `/root/projects/mcchat` に置いて、VPS 上で実行する（再実行可）:
-
-```sh
-cd /root/projects/mcchat
-pwsh ./deploy/setup.ps1                 # ビルド → systemd(mcchat) 登録・再起動 → nginx サイト配置・reload
-./mcchat-server token add <名前>         # トークン発行
-journalctl -u mcchat -f                 # ログ
-```
-
-初回は `.env` に暗号鍵が生成される。**このファイルを必ずバックアップすること**（失うと保存済みメッセージは復号できない）。
-
-| パス（`/root/projects/mcchat/`） | 用途 |
-|---|---|
-| `mcchat-server` | バイナリ |
-| `config.json` | 設定（初回のみ example からコピー） |
-| `.env` | `MCCHAT_KEY`（0600） |
-| `mcchat.db` | SQLite |
-
-鍵の入れ替え: 新しい鍵を `MCCHAT_KEY`・新しい `MCCHAT_KEY_ID` に設定し、旧鍵を `MCCHAT_OLD_KEYS="1:<旧鍵>"` に移す。
-
-## 開発
+- Go 1.26+
+- Java 25 (to run Gradle / Loom 1.18; the mod itself targets Java 21)
 
 ```sh
 cd server && go test -race ./...
-
-cd mod && ./gradlew build          # build/libs/mcchat-*.jar
+cd mod && ./gradlew build          # mod/build/libs/mcchat-<version>.jar
 ```
 
-Gradle（Loom 1.18）の実行には **Java 25** が必要（`gradle/gradle-daemon-jvm.properties` で自動選択。Mod 自体は Java 21 向け）。
+`ChatConnectionIT` in `mod/src/test` checks the connection against a running mcchat-server.
+It runs only when `MCCHAT_IT_URL`, `MCCHAT_IT_TOKEN_A`, and `MCCHAT_IT_TOKEN_B` are set.
 
-### リリース
+### Release
 
-`mod/gradle.properties` の `version` を上げてコミットし、同じ番号のタグを push する。
-GitHub Actions（`.github/workflows/release.yml`）が jar をビルドして Release に添付する。
+Bump `version` in `mod/gradle.properties`, commit, and push a matching tag.
+GitHub Actions (`.github/workflows/release.yml`) builds the jar and attaches it to the release.
 
 ```sh
-git tag v1.0.0 && git push origin v1.0.0
+git tag v1.0.1 && git push origin v1.0.1
 ```
 
-`mod/src/test` の `ChatConnectionIT` は、起動中の mcchat-server に対して接続処理を検証する。
-`MCCHAT_IT_URL` / `MCCHAT_IT_TOKEN_A` / `MCCHAT_IT_TOKEN_B` を設定したときだけ実行される。
+---
+
+## Tech Stack
+
+- **Mod** — Java, Fabric (Loom, Mojang mappings), `java.net.http.WebSocket`
+- **Server** — Go, [coder/websocket](https://github.com/coder/websocket), [modernc.org/sqlite](https://modernc.org/sqlite)
+- **Infra** — Cloudflare, nginx, systemd
+
+---
+
+## License
+
+MIT License — © 2026 darui3018823  
+See [LICENSE](./LICENSE) for details.
+
+This project is not affiliated with Mojang Studios or Microsoft.  
+See [NOTICE](./NOTICE) for third-party notices.
