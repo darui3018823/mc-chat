@@ -25,6 +25,17 @@ public final class McChatScreen extends Screen {
 	private static final int VISIBLE_LINES = 12;
 	private static final int TEXT = 0xFFFFFFFF;
 	private static final int DIM = 0xFFAAAAAA;
+	private static final int SUGGEST_BG = 0xE0000000;
+	private static final int SUGGEST_CMD = 0xFFFFFF55;
+
+	/** Local commands handled by {@link McChatClient#submit}: completion and hint key. */
+	private record Suggestion(String completion, String hint) {}
+
+	private static final List<Suggestion> SUGGESTIONS = List.of(
+			new Suggestion("/jp ", "mcchat.suggest.jp"),
+			new Suggestion("/japanize", "mcchat.suggest.japanize"),
+			new Suggestion("/japanize on", "mcchat.suggest.japanize.on"),
+			new Suggestion("/japanize off", "mcchat.suggest.japanize.off"));
 
 	private EditBox input;
 	private String draft = "";
@@ -65,6 +76,11 @@ public final class McChatScreen extends Screen {
 			}
 			return true;
 		}
+		if (key == GLFW.GLFW_KEY_TAB) {
+			List<Suggestion> s = suggestions();
+			if (!s.isEmpty()) input.setValue(s.get(0).completion());
+			return true;
+		}
 		if (key == GLFW.GLFW_KEY_PAGE_UP) {
 			scrollBy(lastShown - 1);
 			return true;
@@ -80,6 +96,45 @@ public final class McChatScreen extends Screen {
 	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
 		scrollBy((int) Math.signum(scrollY));
 		return true;
+	}
+
+	/** Commands starting with what has been typed, while a command is being typed. */
+	private List<Suggestion> suggestions() {
+		String v = input.getValue();
+		if (!v.startsWith("/") || v.startsWith("//")) return List.of();
+		String typed = v.toLowerCase();
+		List<Suggestion> out = new ArrayList<>();
+		for (Suggestion s : SUGGESTIONS) {
+			String c = s.completion();
+			// "/jp " stays listed while its argument is typed; the rest while they still match.
+			boolean match = c.endsWith(" ")
+					? typed.startsWith(c) || c.startsWith(typed)
+					: c.startsWith(typed);
+			if (match) out.add(s);
+		}
+		return out;
+	}
+
+	private void renderSuggestions(GuiGraphics g) {
+		List<Suggestion> list = suggestions();
+		if (list.isEmpty()) return;
+		int step = font.lineHeight + 1;
+		int w = 0;
+		List<Component> lines = new ArrayList<>();
+		for (Suggestion s : list) {
+			Component c = Component.literal(s.completion().trim()).withColor(SUGGEST_CMD)
+					.append(Component.literal("  ").append(Component.translatable(s.hint())).withColor(DIM));
+			lines.add(c);
+			w = Math.max(w, font.width(c));
+		}
+		int bottom = height - INPUT_HEIGHT - MARGIN - 1;
+		int top = bottom - lines.size() * step - 2;
+		g.fill(MARGIN, top, MARGIN + w + 4, bottom, SUGGEST_BG);
+		int y = top + 2;
+		for (Component c : lines) {
+			g.drawString(font, c, MARGIN + 2, y, TEXT, false);
+			y += step;
+		}
 	}
 
 	private void scrollBy(int lines) {
@@ -146,6 +201,7 @@ public final class McChatScreen extends Screen {
 			Component more = Component.translatable("mcchat.screen.scrolled", scroll);
 			g.drawString(font, more, textWidth + MARGIN - font.width(more), bottom, DIM, true);
 		}
+		renderSuggestions(g);
 	}
 
 	private static Component statusLine(ChatLog log) {

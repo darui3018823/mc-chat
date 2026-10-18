@@ -21,5 +21,10 @@
 	"mcchat.command.japanize.on": "Romaji conversion: on (e.g. ohayou -> ohayou (おはよう))",
 	"mcchat.command.japanize.off": "Romaji conversion: off",
 	"mcchat.command.japanize.usage": "Usage: /japanize [on|off]",
-	"mcchat.command.unknown": "Unknown command: /%s (type // to send a message starting with /)"
+	"mcchat.command.unknown": "Unknown command: /%s (type // to send a message starting with /)",
+	"mcchat.command.jp.usage": "Usage: /jp <text> (converts the whole text regardless of the checks)",
+	"mcchat.suggest.jp": "<text> convert the whole text from romaji and send",
+	"mcchat.suggest.japanize": "toggle romaji conversion",
+	"mcchat.suggest.japanize.on": "turn romaji conversion on",
+	"mcchat.suggest.japanize.off": "turn romaji conversion off"
 }

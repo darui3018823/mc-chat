@@ -21,5 +21,10 @@
 	"mcchat.command.japanize.on": "ローマ字変換: オン（例: ohayou → ohayou (おはよう)）",
 	"mcchat.command.japanize.off": "ローマ字変換: オフ",
 	"mcchat.command.japanize.usage": "使い方: /japanize [on|off]",
-	"mcchat.command.unknown": "不明なコマンド: /%s（/ で始まる文を送るときは // と書く）"
+	"mcchat.command.unknown": "不明なコマンド: /%s（/ で始まる文を送るときは // と書く）",
+	"mcchat.command.jp.usage": "使い方: /jp <文>（判定を無視してまるごと変換して送る）",
+	"mcchat.suggest.jp": "<文> 判定なしでまるごとローマ字変換して送る",
+	"mcchat.suggest.japanize": "ローマ字変換のオン・オフを切り替える",
+	"mcchat.suggest.japanize.on": "ローマ字変換をオンにする",
+	"mcchat.suggest.japanize.off": "ローマ字変換をオフにする"
 }
