@@ -65,6 +65,13 @@ LunaChat と同じく、ローマ字で打った文を日本語に変換して�
 
 `/font uniform` で Unifont、`/font default` で標準に戻す。MCChat の行（Y の画面・チャット欄）にだけ効く。
 
+PC に入っているフォント（`C:\Windows\Fonts` など）は `/font system <ファイル名>` で使える（例: `/font system meiryo`、`/font system yugothm`）。`/font system ` まで打つと候補が出る。
+
+- Mod が `resourcepacks/mcchat-system-font` にフォントをコピーしたリソースパックを作って有効化し、リソースを再読み込みする（数秒かかる）
+- `.ttc` はコレクションの最初のフォントが使われる
+- 大きさは `/font size <4〜32>`（既定 11）。ほかに `config/mcchat.json` の `systemFontOversample`（既定 4、大きいほどくっきり）
+- 戻すときは `/font default`。パックはリソースパック画面から外せる
+
 リソースパックのフォントも `/font <名前空間:ID>` で使える。たとえば TTF を使うなら、リソースパックに次の2つを入れて `/font mypack:chat` とする。
 
 ```

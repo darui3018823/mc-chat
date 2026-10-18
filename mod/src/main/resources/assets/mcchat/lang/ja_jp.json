@@ -33,7 +33,7 @@
 	"mcchat.command.dict.missing": "辞書にありません: %s",
 	"mcchat.command.dict.empty": "辞書は空です。",
 	"mcchat.command.dict.header": "辞書（%s 件）",
-	"mcchat.command.font.current": "フォント: %s（/font default | uniform | <名前空間:ID>）",
+	"mcchat.command.font.current": "フォント: %s（/font default | uniform | system <名前> | size <大きさ> | <名前空間:ID>）",
 	"mcchat.command.font.set": "フォントを変更しました: %s",
 	"mcchat.command.font.invalid": "フォント ID が不正です: %s",
 	"mcchat.suggest.dict.add": "<語> <置き換え> 辞書に登録（例: maikura マイクラ）",
@@ -41,5 +41,14 @@
 	"mcchat.suggest.dict.list": "辞書の一覧",
 	"mcchat.suggest.font.default": "標準のフォントに戻す",
 	"mcchat.suggest.font.uniform": "Unifont（ドット絵風の Unicode フォント）",
-	"mcchat.suggest.font": "<名前空間:ID> リソースパックのフォントを使う"
+	"mcchat.suggest.font": "<名前空間:ID> リソースパックのフォントを使う",
+	"mcchat.command.font.system.usage": "PC のフォント %s 件。/font system <ファイル名> で使う（例: /font system meiryo）",
+	"mcchat.command.font.system.missing": "フォントが見つからないか、候補が複数あります: %s",
+	"mcchat.command.font.system.loading": "フォントを読み込み中: %s（リソースを再読み込みします）",
+	"mcchat.command.font.system.failed": "フォントを読み込めませんでした: %s",
+	"mcchat.command.font.size.usage": "使い方: /font size <4〜32>（今: %s）",
+	"mcchat.command.font.size.set": "PC フォントの大きさ: %s",
+	"mcchat.suggest.font.system": "<ファイル名> PC に入っているフォントを使う",
+	"mcchat.suggest.font.size": "<大きさ> PC フォントの大きさ（既定 11）",
+	"mcchat.suggest.font.file": "PC のフォント"
 }

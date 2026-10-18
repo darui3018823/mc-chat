@@ -33,6 +33,11 @@ public final class McChatConfig {
 	public Map<String, String> dictionary = new LinkedHashMap<>();
 	/** Font id for mcchat lines, e.g. "minecraft:uniform"; empty for the default font. Set with /font. */
 	public String font = "";
+	/** OS font file installed by /font system, e.g. "meiryo.ttc". */
+	public String systemFont = "";
+	/** Glyph size and oversampling for the OS font (resource pack ttf provider values). */
+	public float systemFontSize = 11;
+	public float systemFontOversample = 4;
 
 	public static Path path() {
 		return FabricLoader.getInstance().getConfigDir().resolve("mcchat.json");
@@ -77,6 +82,9 @@ public final class McChatConfig {
 		if (channelOverride == null) channelOverride = "";
 		if (dictionary == null) dictionary = new LinkedHashMap<>();
 		if (font == null) font = "";
+		if (systemFont == null) systemFont = "";
+		if (systemFontSize <= 0) systemFontSize = 11;
+		if (systemFontOversample <= 0) systemFontOversample = 4;
 		font = font.trim();
 		serverUrl = serverUrl.trim();
 		token = token.trim();

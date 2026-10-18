@@ -2,7 +2,10 @@ package dev.daruks.mcchat;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Path;
+import java.util.Map;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -166,6 +169,14 @@ public final class McChatClient implements ClientModInitializer {
 			return;
 		}
 		String arg = args[1].toLowerCase();
+		if (arg.equals("system")) {
+			systemFontCommand(args);
+			return;
+		}
+		if (arg.equals("size")) {
+			fontSizeCommand(args);
+			return;
+		}
 		String id = switch (arg) {
 			case "default", "reset" -> "";
 			case "uniform" -> "minecraft:uniform";
@@ -180,6 +191,69 @@ public final class McChatClient implements ClientModInitializer {
 		fontCache = null;
 		LOG_STATE.notice(Component.translatable("mcchat.command.font.set", id.isEmpty() ? "default" : id),
 				ChatFormatting.GREEN);
+	}
+
+	/** /font system [<file name>]: lists OS fonts, or installs one and switches to it. */
+	private static void systemFontCommand(String[] args) {
+		if (args.length < 3) {
+			Map<String, Path> fonts = SystemFonts.list();
+			LOG_STATE.notice(Component.translatable("mcchat.command.font.system.usage", fonts.size()), ChatFormatting.GRAY);
+			return;
+		}
+		Path file = SystemFonts.find(args[2]);
+		if (file == null) {
+			LOG_STATE.notice(Component.translatable("mcchat.command.font.system.missing", args[2]), ChatFormatting.YELLOW);
+			return;
+		}
+		config.systemFont = file.getFileName().toString();
+		config.font = SystemFonts.FONT_ID;
+		config.save();
+		fontCache = null;
+		installSystemFont(file);
+	}
+
+	/** /font size <n>: glyph size of the OS font. */
+	private static void fontSizeCommand(String[] args) {
+		float size;
+		try {
+			size = args.length >= 3 ? Float.parseFloat(args[2]) : -1;
+		} catch (NumberFormatException e) {
+			size = -1;
+		}
+		if (size < 4 || size > 32) {
+			LOG_STATE.notice(Component.translatable("mcchat.command.font.size.usage", config.systemFontSize),
+					ChatFormatting.YELLOW);
+			return;
+		}
+		config.systemFontSize = size;
+		config.save();
+		Path file = config.systemFont.isEmpty() ? null : SystemFonts.find(config.systemFont);
+		if (file == null) {
+			LOG_STATE.notice(Component.translatable("mcchat.command.font.size.set", size), ChatFormatting.GREEN);
+			return;
+		}
+		installSystemFont(file);
+	}
+
+	private static void installSystemFont(Path file) {
+		LOG_STATE.notice(Component.translatable("mcchat.command.font.system.loading", file.getFileName().toString()),
+				ChatFormatting.GRAY);
+		try {
+			SystemFonts.install(file, config.systemFontSize, config.systemFontOversample)
+					.whenComplete((v, e) -> Minecraft.getInstance().execute(() -> {
+						if (e != null) {
+							LOG.warn("mcchat: font reload failed", e);
+							LOG_STATE.notice(Component.translatable("mcchat.command.font.system.failed", e.toString()),
+									ChatFormatting.RED);
+						} else {
+							LOG_STATE.notice(Component.translatable("mcchat.command.font.set",
+									file.getFileName().toString()), ChatFormatting.GREEN);
+						}
+					}));
+		} catch (IOException | RuntimeException e) {
+			LOG.warn("mcchat: could not install font {}", file, e);
+			LOG_STATE.notice(Component.translatable("mcchat.command.font.system.failed", e.toString()), ChatFormatting.RED);
+		}
 	}
 
 	private static String fontCacheKey = null;

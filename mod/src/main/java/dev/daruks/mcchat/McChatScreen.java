@@ -27,6 +27,7 @@ public final class McChatScreen extends Screen {
 	private static final int DIM = 0xFFAAAAAA;
 	private static final int SUGGEST_BG = 0xE0000000;
 	private static final int SUGGEST_CMD = 0xFFFFFF55;
+	private static final int MAX_FONT_SUGGESTIONS = 10;
 
 	/** Local commands handled by {@link McChatClient#submit}: completion and hint key. */
 	private record Suggestion(String completion, String hint) {}
@@ -41,6 +42,8 @@ public final class McChatScreen extends Screen {
 			new Suggestion("/dict list", "mcchat.suggest.dict.list"),
 			new Suggestion("/font default", "mcchat.suggest.font.default"),
 			new Suggestion("/font uniform", "mcchat.suggest.font.uniform"),
+			new Suggestion("/font system ", "mcchat.suggest.font.system"),
+			new Suggestion("/font size ", "mcchat.suggest.font.size"),
 			new Suggestion("/font ", "mcchat.suggest.font"));
 
 	private static final int MAX_HISTORY = 50;
@@ -149,6 +152,16 @@ public final class McChatScreen extends Screen {
 		if (!v.startsWith("/") || v.startsWith("//")) return List.of();
 		String typed = v.toLowerCase();
 		List<Suggestion> out = new ArrayList<>();
+		// OS font file names once "/font system " is typed.
+		String fontPrefix = "/font system ";
+		if (typed.startsWith(fontPrefix)) {
+			String name = typed.substring(fontPrefix.length());
+			for (String f : SystemFonts.list().keySet()) {
+				if (f.startsWith(name) && !f.equals(name)) out.add(new Suggestion(fontPrefix + f, "mcchat.suggest.font.file"));
+				if (out.size() >= MAX_FONT_SUGGESTIONS) break;
+			}
+			if (!out.isEmpty()) return out;
+		}
 		for (Suggestion s : SUGGESTIONS) {
 			String c = s.completion();
 			// "/jp " stays listed while its argument is typed; the rest while they still match.
