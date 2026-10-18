@@ -37,7 +37,15 @@ public final class McChatScreen extends Screen {
 			new Suggestion("/japanize on", "mcchat.suggest.japanize.on"),
 			new Suggestion("/japanize off", "mcchat.suggest.japanize.off"));
 
+	private static final int MAX_HISTORY = 50;
+	/** Lines submitted this session, newest last; kept across screen openings. */
+	private static final List<String> HISTORY = new ArrayList<>();
+
 	private EditBox input;
+	/** Position in HISTORY while browsing with Up/Down, or -1 when editing a new line. */
+	private int historyPos = -1;
+	/** The new line being typed before browsing history started. */
+	private String historyDraft = "";
 	private String draft = "";
 	/** Wrapped lines scrolled up from the newest; 0 follows new messages. */
 	private int scroll = 0;
@@ -71,9 +79,24 @@ public final class McChatScreen extends Screen {
 		if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
 			String text = input.getValue().trim();
 			if (!text.isEmpty() && McChatClient.submit(text)) {
+				remember(text);
 				input.setValue("");
 				scroll = 0;
 			}
+			return true;
+		}
+		// Esc first clears the input; a second Esc closes the screen.
+		if (key == GLFW.GLFW_KEY_ESCAPE && !input.getValue().isEmpty()) {
+			input.setValue("");
+			historyPos = -1;
+			return true;
+		}
+		if (key == GLFW.GLFW_KEY_UP) {
+			browseHistory(1);
+			return true;
+		}
+		if (key == GLFW.GLFW_KEY_DOWN) {
+			browseHistory(-1);
 			return true;
 		}
 		if (key == GLFW.GLFW_KEY_TAB) {
@@ -96,6 +119,22 @@ public final class McChatScreen extends Screen {
 	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
 		scrollBy((int) Math.signum(scrollY));
 		return true;
+	}
+
+	private void remember(String text) {
+		if (HISTORY.isEmpty() || !HISTORY.getLast().equals(text)) HISTORY.add(text);
+		if (HISTORY.size() > MAX_HISTORY) HISTORY.removeFirst();
+		historyPos = -1;
+	}
+
+	/** Moves through sent lines like vanilla chat: older with +1, newer with -1. */
+	private void browseHistory(int dir) {
+		int pos = Math.max(-1, Math.min(historyPos + dir, HISTORY.size() - 1));
+		if (pos == historyPos) return;
+		if (historyPos == -1) historyDraft = input.getValue();
+		historyPos = pos;
+		input.setValue(pos == -1 ? historyDraft : HISTORY.get(HISTORY.size() - 1 - pos));
+		input.moveCursorToEnd(false);
 	}
 
 	/** Commands starting with what has been typed, while a command is being typed. */
