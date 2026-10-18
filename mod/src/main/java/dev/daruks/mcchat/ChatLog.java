@@ -35,6 +35,8 @@ public final class ChatLog implements ChatConnection.Listener {
 	private boolean showInHud = true;
 	private Component lastNotice = null;
 	private long lastNoticeAt = 0;
+	/** The latest notice is the rate limit one, which a later successful send clears. */
+	private boolean noticeIsRateLimit = false;
 	/**
 	 * Texts we sent that the server has not answered yet, oldest first. The
 	 * server answers each send in order, either with our own msg or an error.
@@ -147,7 +149,10 @@ public final class ChatLog implements ChatConnection.Listener {
 	@Override
 	public void onMessage(ChatConnection.Message m) {
 		if (channel == null || !channel.equals(m.channel())) return;
-		if (m.name().equals(myName)) pending.pollFirst();
+		if (m.name().equals(myName)) {
+			pending.pollFirst();
+			if (noticeIsRateLimit) lastNotice = null;
+		}
 		if (m.id() <= lastId) return;
 		add(m);
 		toHud(m);
@@ -163,6 +168,7 @@ public final class ChatLog implements ChatConnection.Listener {
 					rejectedAt = System.currentTimeMillis();
 				}
 				notice(Component.translatable("mcchat.error.rate_limited"), ChatFormatting.YELLOW);
+				noticeIsRateLimit = true;
 			}
 			case "empty" -> pending.pollFirst();
 			default -> {
@@ -199,6 +205,7 @@ public final class ChatLog implements ChatConnection.Listener {
 	public void notice(Component c, ChatFormatting color) {
 		lastNotice = c.copy().withStyle(color);
 		lastNoticeAt = System.currentTimeMillis();
+		noticeIsRateLimit = false;
 		hud(prefix().append(lastNotice));
 	}
 
