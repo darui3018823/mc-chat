@@ -76,4 +76,4 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TAG: ${{ inputs.tag }}
-        run: .github/scripts/release-notes.sh "$TAG" >> "$GITHUB_STEP_SUMMARY"
+        run: .github/scripts/release-notes.sh "$TAG" | tee -a "$GITHUB_STEP_SUMMARY"
