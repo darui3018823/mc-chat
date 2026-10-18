@@ -55,10 +55,13 @@ public final class McChatClient implements ClientModInitializer {
 			send(text, text);
 			return true;
 		}
-		String original = text;
-		Japanizer.convert(original)
-				.thenAccept(jp -> Minecraft.getInstance().execute(() -> send(original, japanized(original, jp))));
+		sendJapanized(text, text, false);
 		return true;
+	}
+
+	private static void sendJapanized(String typed, String romaji, boolean force) {
+		Japanizer.convert(romaji, force)
+				.thenAccept(jp -> Minecraft.getInstance().execute(() -> send(typed, japanized(romaji, jp))));
 	}
 
 	/** "ohayou (おはよう)" like LunaChat, or just the conversion if that would be too long. */
@@ -84,7 +87,18 @@ public final class McChatClient implements ClientModInitializer {
 	private static void command(String line) {
 		String[] args = line.split("\\s+");
 		switch (args[0].toLowerCase()) {
-			case "japanize", "jp" -> {
+			case "jp" -> {
+				// Forced conversion of the rest of the line, regardless of /japanize.
+				String rest = line.substring(args[0].length()).trim();
+				if (rest.isEmpty()) {
+					LOG_STATE.notice(Component.translatable("mcchat.command.jp.usage"), ChatFormatting.YELLOW);
+				} else if (connection == null || !connection.connected()) {
+					notConnected();
+				} else {
+					sendJapanized("/" + line, rest, true);
+				}
+			}
+			case "japanize" -> {
 				if (args.length >= 2 && !args[1].equalsIgnoreCase("on") && !args[1].equalsIgnoreCase("off")) {
 					LOG_STATE.notice(Component.translatable("mcchat.command.japanize.usage"), ChatFormatting.YELLOW);
 					return;

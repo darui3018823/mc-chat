@@ -30,22 +30,23 @@ public final class Japanizer {
 	private Japanizer() {}
 
 	/**
-	 * Whether text looks like romaji. Text with non-ASCII characters (already
-	 * Japanese), uppercase letters (names, "OK") or URLs is left alone.
+	 * Whether text has romaji to convert. Text with non-ASCII characters is
+	 * already Japanese and is left alone.
 	 */
 	public static boolean shouldConvert(String text) {
-		boolean letter = false;
 		for (int i = 0; i < text.length(); i++) {
-			char c = text.charAt(i);
-			if (c > 0x7F || (c >= 'A' && c <= 'Z')) return false;
-			if (c >= 'a' && c <= 'z') letter = true;
+			if (text.charAt(i) > 0x7F) return false;
 		}
-		return letter && !text.contains("://");
+		return !toKanaWords(text).equals(text);
 	}
 
-	/** Converts romaji text to Japanese; completes with the hiragana if kanji conversion fails. */
-	public static CompletableFuture<String> convert(String romaji) {
-		String kana = toKana(romaji);
+	/**
+	 * Converts romaji text to Japanese; completes with the hiragana if kanji
+	 * conversion fails. With force, every word is converted, even ones that
+	 * do not look like romaji.
+	 */
+	public static CompletableFuture<String> convert(String romaji, boolean force) {
+		String kana = force ? toKanaForced(romaji) : toKanaWords(romaji);
 		String url = GOOGLE + "?langpair=" + URLEncoder.encode("ja-Hira|ja", StandardCharsets.UTF_8)
 				+ "&text=" + URLEncoder.encode(kana, StandardCharsets.UTF_8);
 		HttpRequest req = HttpRequest.newBuilder(URI.create(url)).timeout(TIMEOUT).GET().build();
@@ -72,6 +73,41 @@ public final class Japanizer {
 			McChatClient.LOG.warn("mcchat: unexpected transliterate response: {}", body);
 			return null;
 		}
+	}
+
+	/**
+	 * Converts each word that is valid romaji (case-insensitive) and keeps the
+	 * rest, such as "Google", "OK", "I" or URLs. Spaces between converted words
+	 * are dropped since Japanese does not use them.
+	 */
+	static String toKanaWords(String s) {
+		StringBuilder out = new StringBuilder();
+		boolean prevKana = false;
+		for (String word : s.trim().split(" +")) {
+			if (word.isEmpty()) continue;
+			String kana = wordToKana(word);
+			boolean isKana = kana != null;
+			if (!out.isEmpty() && !(prevKana && isKana)) out.append(' ');
+			out.append(isKana ? kana : word);
+			prevKana = isKana;
+		}
+		return out.toString();
+	}
+
+	/** Converts the whole text, lowercased, with spaces dropped. */
+	static String toKanaForced(String s) {
+		return toKana(s.toLowerCase().replaceAll(" +", ""));
+	}
+
+	/** Hiragana for word, or null if it is not romaji. */
+	private static String wordToKana(String word) {
+		if (word.contains("://") || word.equals(word.toUpperCase()) && !word.equals(word.toLowerCase())) return null;
+		String kana = toKana(word.toLowerCase());
+		for (int i = 0; i < kana.length(); i++) {
+			char c = kana.charAt(i);
+			if (c >= 'a' && c <= 'z') return null;
+		}
+		return kana;
 	}
 
 	/** Romaji to hiragana with the usual IME rules (nn, small tsu on doubled consonants, xa/la). */

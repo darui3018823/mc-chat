@@ -23,11 +23,28 @@ class JapanizerTest {
 	}
 
 	@Test
+	void toKanaWords() {
+		assertEquals("Google わ、こうしたりようきやくわできれば", Japanizer.toKanaWords("Google wa, koushita riyou kiyaku wa dekireba"));
+		assertEquals("しかし、", Japanizer.toKanaWords("Shikashi,"));
+		assertEquals("OK です", Japanizer.toKanaWords("OK desu"));
+		assertEquals("I", Japanizer.toKanaWords("I"));
+		assertEquals("これ https://example.com みて", Japanizer.toKanaWords("kore https://example.com mite"));
+	}
+
+	@Test
+	void toKanaForced() {
+		assertEquals("ごおgぇ", Japanizer.toKanaForced("Google"));
+		assertEquals("しかしおk", Japanizer.toKanaForced("Shikashi OK"));
+	}
+
+	@Test
 	void shouldConvert() {
 		assertTrue(Japanizer.shouldConvert("ohayou"));
+		assertTrue(Japanizer.shouldConvert("Shikashi Google wa"));
 		assertFalse(Japanizer.shouldConvert("おはよう"));
 		assertFalse(Japanizer.shouldConvert("OK"));
-		assertFalse(Japanizer.shouldConvert("see https://example.com"));
+		assertFalse(Japanizer.shouldConvert("Google"));
+		assertFalse(Japanizer.shouldConvert("https://example.com"));
 		assertFalse(Japanizer.shouldConvert("123"));
 	}
 }
