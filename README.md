@@ -84,6 +84,8 @@ It runs only when `MCCHAT_IT_URL`, `MCCHAT_IT_TOKEN_A`, and `MCCHAT_IT_TOKEN_B` 
 
 Bump `version` in `mod/gradle.properties`, commit, and push a matching tag.
 GitHub Actions (`.github/workflows/release.yml`) builds the jar and attaches it to the release.
+Release notes are written by Claude Haiku from the commits since the previous tag (`ANTHROPIC_API_KEY` secret); GitHub's generated notes are used if that fails.
+Run the workflow manually with a tag to preview the notes without releasing.
 
 ```sh
 git tag v1.0.1 && git push origin v1.0.1

@@ -84,6 +84,8 @@ cd mod && ./gradlew build          # mod/build/libs/mcchat-<version>.jar
 
 `mod/gradle.properties` の `version` を上げてコミットし、同じ番号のタグを push します。
 GitHub Actions（`.github/workflows/release.yml`）が jar をビルドして Release に添付します。
+リリースノートは、前のタグからのコミットをもとに Claude Haiku が書きます（Secret `ANTHROPIC_API_KEY`）。失敗したときは GitHub の自動生成に切り替わります。
+ワークフローをタグを指定して手動実行すると、リリースせずにノートだけ確認できます。
 
 ```sh
 git tag v1.0.1 && git push origin v1.0.1
