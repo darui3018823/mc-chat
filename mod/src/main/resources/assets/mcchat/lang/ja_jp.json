@@ -2,6 +2,7 @@
 	"key.mcchat.open": "MCChatを開く",
 	"key.category.mcchat.main": "MCChat",
 	"mcchat.screen.title": "MCChat",
+	"mcchat.screen.scrolled": "↓ 新着側に %s 行",
 	"mcchat.screen.input": "メッセージ",
 	"mcchat.screen.status": "%s | チャンネル: %s | 名前: %s | Enter: 送信 / Esc: 閉じる",
 	"mcchat.status.idle": "未接続",

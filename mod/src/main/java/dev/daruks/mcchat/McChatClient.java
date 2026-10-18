@@ -9,6 +9,8 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -53,6 +55,11 @@ public final class McChatClient implements ClientModInitializer {
 			while (openKey.consumeClick()) {
 				if (client.screen == null && client.player != null) client.setScreen(new McChatScreen());
 			}
+		});
+
+		// The mcchat screen draws its own log; hide the vanilla chat HUD under it.
+		HudElementRegistry.replaceElement(VanillaHudElements.CHAT, chat -> (g, tick) -> {
+			if (!(Minecraft.getInstance().screen instanceof McChatScreen)) chat.render(g, tick);
 		});
 
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> onJoin(client));

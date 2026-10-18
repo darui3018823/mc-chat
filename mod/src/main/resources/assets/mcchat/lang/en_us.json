@@ -2,6 +2,7 @@
 	"key.mcchat.open": "Open MCChat",
 	"key.category.mcchat.main": "MCChat",
 	"mcchat.screen.title": "MCChat",
+	"mcchat.screen.scrolled": "↓ %s more lines",
 	"mcchat.screen.input": "Message",
 	"mcchat.screen.status": "%s | channel: %s | you: %s | Enter: send, Esc: close",
 	"mcchat.status.idle": "Not connected",
