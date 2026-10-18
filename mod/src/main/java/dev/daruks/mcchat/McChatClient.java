@@ -16,6 +16,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FontDescription;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
@@ -51,7 +52,7 @@ public final class McChatClient implements ClientModInitializer {
 			notConnected();
 			return false;
 		}
-		if (!config.japanize || !Japanizer.shouldConvert(text)) {
+		if (!config.japanize || !Japanizer.shouldConvert(text, config.dictionary)) {
 			send(text, text);
 			return true;
 		}
@@ -60,7 +61,7 @@ public final class McChatClient implements ClientModInitializer {
 	}
 
 	private static void sendJapanized(String typed, String romaji, boolean force) {
-		Japanizer.convert(romaji, force)
+		Japanizer.convert(romaji, force, config.dictionary)
 				.thenAccept(jp -> Minecraft.getInstance().execute(() -> send(typed, japanized(romaji, jp))));
 	}
 
@@ -109,8 +110,92 @@ public final class McChatClient implements ClientModInitializer {
 				LOG_STATE.notice(Component.translatable(on ? "mcchat.command.japanize.on" : "mcchat.command.japanize.off"),
 						ChatFormatting.GREEN);
 			}
+			case "dict" -> dictCommand(line, args);
+			case "font" -> fontCommand(args);
 			default -> LOG_STATE.notice(Component.translatable("mcchat.command.unknown", args[0]), ChatFormatting.YELLOW);
 		}
+	}
+
+	/** /dict add <word> <replacement...> | remove <word> | list */
+	private static void dictCommand(String line, String[] args) {
+		String sub = args.length >= 2 ? args[1].toLowerCase() : "";
+		switch (sub) {
+			case "add" -> {
+				if (args.length < 4) {
+					LOG_STATE.notice(Component.translatable("mcchat.command.dict.usage"), ChatFormatting.YELLOW);
+					return;
+				}
+				String word = args[2].toLowerCase();
+				// The replacement is the rest of the line after the word, spaces included.
+				String value = line.split("\\s+", 4)[3].trim();
+				config.dictionary.put(word, value);
+				config.save();
+				LOG_STATE.notice(Component.translatable("mcchat.command.dict.added", word, value), ChatFormatting.GREEN);
+			}
+			case "remove" -> {
+				if (args.length < 3) {
+					LOG_STATE.notice(Component.translatable("mcchat.command.dict.usage"), ChatFormatting.YELLOW);
+					return;
+				}
+				String word = args[2].toLowerCase();
+				if (config.dictionary.remove(word) == null) {
+					LOG_STATE.notice(Component.translatable("mcchat.command.dict.missing", word), ChatFormatting.YELLOW);
+					return;
+				}
+				config.save();
+				LOG_STATE.notice(Component.translatable("mcchat.command.dict.removed", word), ChatFormatting.GREEN);
+			}
+			case "list" -> {
+				if (config.dictionary.isEmpty()) {
+					LOG_STATE.notice(Component.translatable("mcchat.command.dict.empty"), ChatFormatting.GRAY);
+					return;
+				}
+				LOG_STATE.info(Component.translatable("mcchat.command.dict.header", config.dictionary.size())
+						.withStyle(ChatFormatting.GREEN));
+				config.dictionary.forEach((k, v) -> LOG_STATE.info(Component.literal(k + " → " + v)));
+			}
+			default -> LOG_STATE.notice(Component.translatable("mcchat.command.dict.usage"), ChatFormatting.YELLOW);
+		}
+	}
+
+	/** /font [default|uniform|<namespace:id>] */
+	private static void fontCommand(String[] args) {
+		if (args.length < 2) {
+			String cur = config.font.isEmpty() ? "default" : config.font;
+			LOG_STATE.notice(Component.translatable("mcchat.command.font.current", cur), ChatFormatting.GRAY);
+			return;
+		}
+		String arg = args[1].toLowerCase();
+		String id = switch (arg) {
+			case "default", "reset" -> "";
+			case "uniform" -> "minecraft:uniform";
+			default -> arg;
+		};
+		if (!id.isEmpty() && Identifier.tryParse(id) == null) {
+			LOG_STATE.notice(Component.translatable("mcchat.command.font.invalid", arg), ChatFormatting.YELLOW);
+			return;
+		}
+		config.font = id;
+		config.save();
+		fontCache = null;
+		LOG_STATE.notice(Component.translatable("mcchat.command.font.set", id.isEmpty() ? "default" : id),
+				ChatFormatting.GREEN);
+	}
+
+	private static String fontCacheKey = null;
+	private static FontDescription fontCache = null;
+
+	/** Applies the configured font to an mcchat line; unchanged with the default font. */
+	public static Component withFont(Component c) {
+		if (config.font.isEmpty()) return c;
+		if (fontCache == null || !config.font.equals(fontCacheKey)) {
+			Identifier id = Identifier.tryParse(config.font);
+			if (id == null) return c;
+			fontCacheKey = config.font;
+			fontCache = new FontDescription.Resource(id);
+		}
+		FontDescription f = fontCache;
+		return Component.empty().append(c).withStyle(s -> s.withFont(f));
 	}
 
 	@Override

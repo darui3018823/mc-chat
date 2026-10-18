@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class JapanizerTest {
@@ -38,13 +40,24 @@ class JapanizerTest {
 	}
 
 	@Test
+	void dictionary() {
+		Map<String, String> dict = Map.of("maikura", "マイクラ", "mai", "舞");
+		assertEquals(List.of(
+				new Japanizer.Segment("kyou ", false),
+				new Japanizer.Segment("マイクラ", true),
+				new Japanizer.Segment(" yarou", false)), Japanizer.split("kyou Maikura yarou", dict));
+		assertTrue(Japanizer.shouldConvert("Maikura", dict));
+		assertFalse(Japanizer.shouldConvert("Google", dict));
+	}
+
+	@Test
 	void shouldConvert() {
-		assertTrue(Japanizer.shouldConvert("ohayou"));
-		assertTrue(Japanizer.shouldConvert("Shikashi Google wa"));
-		assertFalse(Japanizer.shouldConvert("おはよう"));
-		assertFalse(Japanizer.shouldConvert("OK"));
-		assertFalse(Japanizer.shouldConvert("Google"));
-		assertFalse(Japanizer.shouldConvert("https://example.com"));
-		assertFalse(Japanizer.shouldConvert("123"));
+		assertTrue(Japanizer.shouldConvert("ohayou", Map.of()));
+		assertTrue(Japanizer.shouldConvert("Shikashi Google wa", Map.of()));
+		assertFalse(Japanizer.shouldConvert("おはよう", Map.of()));
+		assertFalse(Japanizer.shouldConvert("OK", Map.of()));
+		assertFalse(Japanizer.shouldConvert("Google", Map.of()));
+		assertFalse(Japanizer.shouldConvert("https://example.com", Map.of()));
+		assertFalse(Japanizer.shouldConvert("123", Map.of()));
 	}
 }

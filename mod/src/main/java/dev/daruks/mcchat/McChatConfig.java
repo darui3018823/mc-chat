@@ -8,6 +8,8 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import net.fabricmc.loader.api.FabricLoader;
 
 /** config/mcchat.json. Re-read every time a server is joined. */
@@ -27,6 +29,10 @@ public final class McChatConfig {
 	public String channelOverride = "";
 	/** Convert romaji to Japanese before sending, like LunaChat. Toggled with /japanize. */
 	public boolean japanize = true;
+	/** Words replaced as is during romaji conversion, e.g. "maikura" -> "マイクラ". Edited with /dict. */
+	public Map<String, String> dictionary = new LinkedHashMap<>();
+	/** Font id for mcchat lines, e.g. "minecraft:uniform"; empty for the default font. Set with /font. */
+	public String font = "";
 
 	public static Path path() {
 		return FabricLoader.getInstance().getConfigDir().resolve("mcchat.json");
@@ -69,6 +75,9 @@ public final class McChatConfig {
 		if (serverUrl == null) serverUrl = "";
 		if (token == null) token = "";
 		if (channelOverride == null) channelOverride = "";
+		if (dictionary == null) dictionary = new LinkedHashMap<>();
+		if (font == null) font = "";
+		font = font.trim();
 		serverUrl = serverUrl.trim();
 		token = token.trim();
 		channelOverride = channelOverride.trim();

@@ -10,7 +10,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -33,20 +35,72 @@ public final class Japanizer {
 	 * Whether text has romaji to convert. Text with non-ASCII characters is
 	 * already Japanese and is left alone.
 	 */
-	public static boolean shouldConvert(String text) {
+	public static boolean shouldConvert(String text, Map<String, String> dict) {
 		for (int i = 0; i < text.length(); i++) {
 			if (text.charAt(i) > 0x7F) return false;
 		}
-		return !toKanaWords(text).equals(text);
+		for (Segment s : split(text, dict)) {
+			if (s.fromDict() || !toKanaWords(s.text()).equals(s.text().trim())) return true;
+		}
+		return false;
+	}
+
+	/** A run of the input: either a dictionary replacement or text to convert. */
+	record Segment(String text, boolean fromDict) {}
+
+	/**
+	 * Splits text at dictionary words (case-insensitive, longest match first),
+	 * replacing each with its registered value.
+	 */
+	static List<Segment> split(String text, Map<String, String> dict) {
+		List<Segment> out = new ArrayList<>();
+		StringBuilder plain = new StringBuilder();
+		int i = 0;
+		while (i < text.length()) {
+			String key = null;
+			for (String k : dict.keySet()) {
+				if (!k.isEmpty() && (key == null || k.length() > key.length())
+						&& text.regionMatches(true, i, k, 0, k.length())) {
+					key = k;
+				}
+			}
+			if (key == null) {
+				plain.append(text.charAt(i++));
+				continue;
+			}
+			if (!plain.isEmpty()) out.add(new Segment(plain.toString(), false));
+			plain.setLength(0);
+			out.add(new Segment(dict.get(key), true));
+			i += key.length();
+		}
+		if (!plain.isEmpty()) out.add(new Segment(plain.toString(), false));
+		return out;
 	}
 
 	/**
-	 * Converts romaji text to Japanese; completes with the hiragana if kanji
-	 * conversion fails. With force, every word is converted, even ones that
-	 * do not look like romaji.
+	 * Converts romaji text to Japanese, using dictionary words as registered.
+	 * Each part completes with its hiragana if kanji conversion fails. With
+	 * force, every word is converted, even ones that do not look like romaji.
 	 */
-	public static CompletableFuture<String> convert(String romaji, boolean force) {
-		String kana = force ? toKanaForced(romaji) : toKanaWords(romaji);
+	public static CompletableFuture<String> convert(String romaji, boolean force, Map<String, String> dict) {
+		List<CompletableFuture<String>> parts = new ArrayList<>();
+		for (Segment s : split(romaji, dict)) {
+			if (s.fromDict()) {
+				parts.add(CompletableFuture.completedFuture(s.text()));
+			} else {
+				parts.add(kanji(force ? toKanaForced(s.text()) : toKanaWords(s.text())));
+			}
+		}
+		return CompletableFuture.allOf(parts.toArray(CompletableFuture[]::new)).thenApply(v -> {
+			StringBuilder sb = new StringBuilder();
+			for (CompletableFuture<String> p : parts) sb.append(p.join());
+			return sb.toString();
+		});
+	}
+
+	/** Hiragana to kanji via Google; completes with the input if that fails. */
+	private static CompletableFuture<String> kanji(String kana) {
+		if (kana.chars().noneMatch(c -> c >= 'ぁ' && c <= 'ゖ')) return CompletableFuture.completedFuture(kana);
 		String url = GOOGLE + "?langpair=" + URLEncoder.encode("ja-Hira|ja", StandardCharsets.UTF_8)
 				+ "&text=" + URLEncoder.encode(kana, StandardCharsets.UTF_8);
 		HttpRequest req = HttpRequest.newBuilder(URI.create(url)).timeout(TIMEOUT).GET().build();

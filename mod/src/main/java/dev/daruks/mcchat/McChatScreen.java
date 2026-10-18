@@ -35,7 +35,13 @@ public final class McChatScreen extends Screen {
 			new Suggestion("/jp ", "mcchat.suggest.jp"),
 			new Suggestion("/japanize", "mcchat.suggest.japanize"),
 			new Suggestion("/japanize on", "mcchat.suggest.japanize.on"),
-			new Suggestion("/japanize off", "mcchat.suggest.japanize.off"));
+			new Suggestion("/japanize off", "mcchat.suggest.japanize.off"),
+			new Suggestion("/dict add ", "mcchat.suggest.dict.add"),
+			new Suggestion("/dict remove ", "mcchat.suggest.dict.remove"),
+			new Suggestion("/dict list", "mcchat.suggest.dict.list"),
+			new Suggestion("/font default", "mcchat.suggest.font.default"),
+			new Suggestion("/font uniform", "mcchat.suggest.font.uniform"),
+			new Suggestion("/font ", "mcchat.suggest.font"));
 
 	private static final int MAX_HISTORY = 50;
 	/** Lines submitted this session, newest last; kept across screen openings. */
@@ -210,8 +216,8 @@ public final class McChatScreen extends Screen {
 		// Lines are drawn bottom-up above the input box, newest at the bottom.
 		int textWidth = Math.min(width - MARGIN * 2, MAX_TEXT_WIDTH);
 		List<FormattedCharSequence> wrapped = new ArrayList<>();
-		for (ChatConnection.Message m : log.lines()) {
-			wrapped.addAll(font.split(ChatLog.format(m), textWidth));
+		for (Component line : log.lines()) {
+			wrapped.addAll(font.split(McChatClient.withFont(line), textWidth));
 		}
 		int step = font.lineHeight + 1;
 		int bottom = height - INPUT_HEIGHT - MARGIN * 2 - font.lineHeight;
@@ -230,7 +236,7 @@ public final class McChatScreen extends Screen {
 			int panelTop = (shown > 0 ? bottom - (shown - 1) * step : noticeY) - 2;
 			g.fill(0, panelTop, textWidth + MARGIN * 2, height - INPUT_HEIGHT - MARGIN - 1, BG);
 		}
-		if (notice != null) g.drawString(font, notice, MARGIN, noticeY, TEXT, true);
+		if (notice != null) g.drawString(font, McChatClient.withFont(notice), MARGIN, noticeY, TEXT, true);
 		int y = bottom;
 		for (int i = end - 1; i >= end - shown; i--) {
 			g.drawString(font, wrapped.get(i), MARGIN, y, TEXT, true);

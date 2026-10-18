@@ -26,7 +26,9 @@ MC:JE + mcchat Mod ──wss──▶ Cloudflare ──▶ nginx ──▶ mccha
      "token": "mcc_...",
      "showInChatHud": true,
      "channelOverride": "",
-     "japanize": true
+     "japanize": true,
+     "dictionary": {},
+     "font": ""
    }
    ```
 3. サーバーに入ると自動接続。**Y キー**（操作設定で変更可）でチャット画面を開き、Enter で送信
@@ -46,6 +48,32 @@ LunaChat と同じく、ローマ字で打った文を日本語に変換して�
 - `/jp <文>` は判定を無視してまるごと変換して送る（`/japanize` がオフでも変換する）
 - Y の画面で `/` を打つとコマンドの候補が出る。Tab で補完
 - `/` で始まる文を送りたいときは `//` と書く
+
+### 辞書
+
+ローマ字変換のときに、登録した語を決まった文字に置き換える（LunaChat の辞書と同じ）。各自の `config/mcchat.json` の `dictionary` に保存される。
+
+```
+/dict add maikura マイクラ     # kyou maikura yarou → kyou maikura yarou (今日マイクラやろう)
+/dict remove maikura
+/dict list
+```
+
+語は大文字・小文字を区別せず、文中のどこにあっても置き換わる（長い語が優先）。
+
+### フォント
+
+`/font uniform` で Unifont、`/font default` で標準に戻す。MCChat の行（Y の画面・チャット欄）にだけ効く。
+
+リソースパックのフォントも `/font <名前空間:ID>` で使える。たとえば TTF を使うなら、リソースパックに次の2つを入れて `/font mypack:chat` とする。
+
+```
+assets/mypack/font/chat.json:
+  {"providers": [{"type": "ttf", "file": "mypack:chat.ttf", "size": 11, "oversample": 2, "shift": [0, 0]}]}
+assets/mypack/font/chat.ttf
+```
+
+存在しない ID を指定すると文字が表示されなくなるので、`/font default` で戻す。
 
 `channelOverride` を設定すると、シングルプレイを含むどのワールドでもそのチャンネルを使う（テスト用）。
 

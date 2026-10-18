@@ -26,5 +26,20 @@
 	"mcchat.suggest.jp": "<text> convert the whole text from romaji and send",
 	"mcchat.suggest.japanize": "toggle romaji conversion",
 	"mcchat.suggest.japanize.on": "turn romaji conversion on",
-	"mcchat.suggest.japanize.off": "turn romaji conversion off"
+	"mcchat.suggest.japanize.off": "turn romaji conversion off",
+	"mcchat.command.dict.usage": "Usage: /dict add <word> <replacement> | /dict remove <word> | /dict list",
+	"mcchat.command.dict.added": "Added to dictionary: %s → %s",
+	"mcchat.command.dict.removed": "Removed from dictionary: %s",
+	"mcchat.command.dict.missing": "Not in dictionary: %s",
+	"mcchat.command.dict.empty": "The dictionary is empty.",
+	"mcchat.command.dict.header": "Dictionary (%s entries)",
+	"mcchat.command.font.current": "Font: %s (/font default | uniform | <namespace:id>)",
+	"mcchat.command.font.set": "Font changed: %s",
+	"mcchat.command.font.invalid": "Invalid font id: %s",
+	"mcchat.suggest.dict.add": "<word> <replacement> add to dictionary (e.g. maikura マイクラ)",
+	"mcchat.suggest.dict.remove": "<word> remove from dictionary",
+	"mcchat.suggest.dict.list": "list the dictionary",
+	"mcchat.suggest.font.default": "back to the default font",
+	"mcchat.suggest.font.uniform": "Unifont (pixel Unicode font)",
+	"mcchat.suggest.font": "<namespace:id> use a font from a resource pack"
 }

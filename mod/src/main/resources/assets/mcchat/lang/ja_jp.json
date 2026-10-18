@@ -26,5 +26,20 @@
 	"mcchat.suggest.jp": "<文> 判定なしでまるごとローマ字変換して送る",
 	"mcchat.suggest.japanize": "ローマ字変換のオン・オフを切り替える",
 	"mcchat.suggest.japanize.on": "ローマ字変換をオンにする",
-	"mcchat.suggest.japanize.off": "ローマ字変換をオフにする"
+	"mcchat.suggest.japanize.off": "ローマ字変換をオフにする",
+	"mcchat.command.dict.usage": "使い方: /dict add <語> <置き換え> | /dict remove <語> | /dict list",
+	"mcchat.command.dict.added": "辞書に登録: %s → %s",
+	"mcchat.command.dict.removed": "辞書から削除: %s",
+	"mcchat.command.dict.missing": "辞書にありません: %s",
+	"mcchat.command.dict.empty": "辞書は空です。",
+	"mcchat.command.dict.header": "辞書（%s 件）",
+	"mcchat.command.font.current": "フォント: %s（/font default | uniform | <名前空間:ID>）",
+	"mcchat.command.font.set": "フォントを変更しました: %s",
+	"mcchat.command.font.invalid": "フォント ID が不正です: %s",
+	"mcchat.suggest.dict.add": "<語> <置き換え> 辞書に登録（例: maikura マイクラ）",
+	"mcchat.suggest.dict.remove": "<語> 辞書から削除",
+	"mcchat.suggest.dict.list": "辞書の一覧",
+	"mcchat.suggest.font.default": "標準のフォントに戻す",
+	"mcchat.suggest.font.uniform": "Unifont（ドット絵風の Unicode フォント）",
+	"mcchat.suggest.font": "<名前空間:ID> リソースパックのフォントを使う"
 }

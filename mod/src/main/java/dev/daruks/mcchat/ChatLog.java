@@ -24,7 +24,8 @@ public final class ChatLog implements ChatConnection.Listener {
 	private static final long NOTICE_MILLIS = 5000;
 	private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
 
-	private final Deque<ChatConnection.Message> lines = new ArrayDeque<>();
+	/** Formatted lines for the screen: messages and local info such as /dict list. */
+	private final Deque<Component> lines = new ArrayDeque<>();
 	private ChatConnection.Status status = ChatConnection.Status.IDLE;
 	private String statusDetail = "";
 	private String myName = "";
@@ -56,7 +57,7 @@ public final class ChatLog implements ChatConnection.Listener {
 		this.showInHud = showInHud;
 	}
 
-	public Iterable<ChatConnection.Message> lines() {
+	public Iterable<Component> lines() {
 		return lines;
 	}
 
@@ -179,9 +180,20 @@ public final class ChatLog implements ChatConnection.Listener {
 	}
 
 	private void add(ChatConnection.Message m) {
-		lines.addLast(m);
-		while (lines.size() > MAX_LINES) lines.removeFirst();
+		addLine(format(m));
 		lastId = Math.max(lastId, m.id());
+	}
+
+	private void addLine(Component c) {
+		lines.addLast(c);
+		while (lines.size() > MAX_LINES) lines.removeFirst();
+	}
+
+	/** A local line (not from the server) shown in both the screen log and the HUD. */
+	public void info(Component c) {
+		Component line = prefix().append(c);
+		addLine(line);
+		hud(line);
 	}
 
 	/** "[MCChat][yyyy/MM/dd HH:mm] name: text" in local time, with the parts colored. */
@@ -211,6 +223,6 @@ public final class ChatLog implements ChatConnection.Listener {
 
 	private static void hud(Component c) {
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.gui != null) mc.gui.getChat().addMessage(c);
+		if (mc.gui != null) mc.gui.getChat().addMessage(McChatClient.withFont(c));
 	}
 }
