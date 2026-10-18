@@ -4,8 +4,8 @@
 	"version": "${version}",
 	"name": "MCChat",
 	"description": "Chat with friends through an external mcchat server, independent of in-game chat.",
-	"authors": ["darui3018823"],
-	"license": "MIT",
+	"authors": ["darui3018823", "Ahoshinet Labs"],
+	"license": "BSD-3-Clause",
 	"environment": "client",
 	"entrypoints": {
 		"client": ["dev.daruks.mcchat.McChatClient"]

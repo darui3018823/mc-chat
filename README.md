@@ -101,7 +101,7 @@ git tag v1.0.1 && git push origin v1.0.1
 
 ## License
 
-MIT License — © 2026 darui3018823  
+BSD 3-Clause License — © 2026 Ahoshinet Labs / darui3018823  
 See [LICENSE](./LICENSE) for details.
 
 This project is not affiliated with Mojang Studios or Microsoft.  
