@@ -15,7 +15,7 @@ import net.minecraft.network.chat.MutableComponent;
  */
 public final class ChatLog implements ChatConnection.Listener {
 	private static final int MAX_LINES = 200;
-	/** How many history lines to echo into the HUD on (re)join. */
+	/** How many missed lines to echo into the HUD on reconnect. */
 	private static final int HUD_HISTORY = 10;
 
 	private final Deque<ChatConnection.Message> lines = new ArrayDeque<>();
@@ -90,7 +90,10 @@ public final class ChatLog implements ChatConnection.Listener {
 			lastId = 0;
 		}
 		channel = ch;
-		int skip = Math.max(0, (int) messages.stream().filter(m -> m.id() > lastId).count() - HUD_HISTORY);
+		// On the first join the backlog only goes to the screen (Y); on a reconnect
+		// the HUD gets what was missed while disconnected.
+		int skip = first ? Integer.MAX_VALUE
+				: Math.max(0, (int) messages.stream().filter(m -> m.id() > lastId).count() - HUD_HISTORY);
 		for (ChatConnection.Message m : messages) {
 			if (m.id() <= lastId) continue;
 			add(m);
