@@ -17,6 +17,8 @@ public final class ChatLog implements ChatConnection.Listener {
 	private static final int MAX_LINES = 200;
 	/** How many missed lines to echo into the HUD on reconnect. */
 	private static final int HUD_HISTORY = 10;
+	/** How long the latest notice stays visible in {@link McChatScreen}. */
+	private static final long NOTICE_MILLIS = 5000;
 
 	private final Deque<ChatConnection.Message> lines = new ArrayDeque<>();
 	private ChatConnection.Status status = ChatConnection.Status.IDLE;
@@ -27,12 +29,15 @@ public final class ChatLog implements ChatConnection.Listener {
 	private long lastId = 0;
 	private boolean everConnected = false;
 	private boolean showInHud = true;
+	private Component lastNotice = null;
+	private long lastNoticeAt = 0;
 
 	public void reset(boolean showInHud) {
 		lines.clear();
 		channel = null;
 		lastId = 0;
 		everConnected = false;
+		lastNotice = null;
 		this.showInHud = showInHud;
 	}
 
@@ -54,6 +59,12 @@ public final class ChatLog implements ChatConnection.Listener {
 
 	public String myName() {
 		return myName;
+	}
+
+	/** The latest notice if it is still recent, else null. The screen hides the HUD, so it shows this itself. */
+	public Component recentNotice() {
+		if (lastNotice == null || System.currentTimeMillis() - lastNoticeAt > NOTICE_MILLIS) return null;
+		return lastNotice;
 	}
 
 	@Override
@@ -144,7 +155,9 @@ public final class ChatLog implements ChatConnection.Listener {
 
 	/** Status notices always go to the HUD so they are not missed. */
 	public void notice(Component c, ChatFormatting color) {
-		hud(prefix().append(c.copy().withStyle(color)));
+		lastNotice = c.copy().withStyle(color);
+		lastNoticeAt = System.currentTimeMillis();
+		hud(prefix().append(lastNotice));
 	}
 
 	private static void hud(Component c) {

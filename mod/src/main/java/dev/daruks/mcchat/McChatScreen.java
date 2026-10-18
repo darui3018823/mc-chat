@@ -87,11 +87,16 @@ public final class McChatScreen extends Screen {
 		int step = font.lineHeight + 1;
 		int bottom = height - INPUT_HEIGHT - MARGIN * 2 - font.lineHeight;
 		int top = MARGIN * 2 + font.lineHeight;
+		// A recent notice (e.g. rate limited) takes the line right above the input.
+		Component notice = log.recentNotice();
+		int noticeY = bottom;
+		if (notice != null) bottom -= step;
 		int shown = Math.min(wrapped.size(), (bottom - top) / step + 1);
-		if (shown > 0) {
-			int panelTop = bottom - (shown - 1) * step - 2;
+		if (shown > 0 || notice != null) {
+			int panelTop = (shown > 0 ? bottom - (shown - 1) * step : noticeY) - 2;
 			g.fill(0, panelTop, width, height - INPUT_HEIGHT - MARGIN - 1, PANEL);
 		}
+		if (notice != null) g.drawString(font, notice, MARGIN, noticeY, TEXT, true);
 		int y = bottom;
 		for (int i = wrapped.size() - 1; i >= wrapped.size() - shown; i--) {
 			g.drawString(font, wrapped.get(i), MARGIN, y, TEXT, true);
