@@ -24,23 +24,79 @@ import org.slf4j.LoggerFactory;
 public final class McChatClient implements ClientModInitializer {
 	public static final String MOD_ID = "mcchat";
 	public static final Logger LOG = LoggerFactory.getLogger(MOD_ID);
+	/** Same as the server's default MaxRunes; longer messages are cut by the server. */
+	private static final int MAX_LENGTH = 256;
 
 	private static final ChatLog LOG_STATE = new ChatLog();
 	private static ChatConnection connection;
 	private static KeyMapping openKey;
+	private static McChatConfig config = new McChatConfig();
 
 	public static ChatLog log() {
 		return LOG_STATE;
 	}
 
-	/** Sends text to the current channel; notifies the player on failure. */
-	public static boolean send(String text) {
-		if (connection != null && connection.send(text)) {
-			LOG_STATE.sent(text);
+	/**
+	 * Handles a line typed by the player: a local command such as /japanize,
+	 * or a message for the current channel ("//text" sends "/text").
+	 * Returns false if it could not be sent, so the caller keeps the text.
+	 */
+	public static boolean submit(String text) {
+		if (text.startsWith("/") && !text.startsWith("//")) {
+			command(text.substring(1).trim());
 			return true;
 		}
+		if (text.startsWith("//")) text = text.substring(1);
+		if (connection == null || !connection.connected()) {
+			notConnected();
+			return false;
+		}
+		if (!config.japanize || !Japanizer.shouldConvert(text)) {
+			send(text, text);
+			return true;
+		}
+		String original = text;
+		Japanizer.convert(original)
+				.thenAccept(jp -> Minecraft.getInstance().execute(() -> send(original, japanized(original, jp))));
+		return true;
+	}
+
+	/** "ohayou (おはよう)" like LunaChat, or just the conversion if that would be too long. */
+	private static String japanized(String romaji, String jp) {
+		if (jp.equals(romaji)) return romaji;
+		String both = romaji + " (" + jp + ")";
+		return both.length() <= MAX_LENGTH ? both : jp;
+	}
+
+	private static void send(String typed, String text) {
+		if (connection != null && connection.send(text)) {
+			// The typed text, not the converted one, goes back into the input if rejected.
+			LOG_STATE.sent(typed);
+		} else {
+			notConnected();
+		}
+	}
+
+	private static void notConnected() {
 		LOG_STATE.notice(Component.translatable("mcchat.error.not_connected"), ChatFormatting.YELLOW);
-		return false;
+	}
+
+	private static void command(String line) {
+		String[] args = line.split("\\s+");
+		switch (args[0].toLowerCase()) {
+			case "japanize", "jp" -> {
+				if (args.length >= 2 && !args[1].equalsIgnoreCase("on") && !args[1].equalsIgnoreCase("off")) {
+					LOG_STATE.notice(Component.translatable("mcchat.command.japanize.usage"), ChatFormatting.YELLOW);
+					return;
+				}
+				boolean on = args.length < 2 ? !config.japanize : args[1].equalsIgnoreCase("on");
+				config.japanize = on;
+				config.save();
+				LOG_STATE.notice(Component.translatable(on ? "mcchat.command.japanize.on" : "mcchat.command.japanize.off"),
+						ChatFormatting.GREEN);
+			}
+			default -> LOG_STATE.notice(Component.translatable("mcchat.command.unknown", args[0]), ChatFormatting.YELLOW);
+		}
 	}
 
 	@Override
@@ -70,7 +126,7 @@ public final class McChatClient implements ClientModInitializer {
 				ClientCommandManager.literal("mcc")
 						.then(ClientCommandManager.argument("text", StringArgumentType.greedyString())
 								.executes(ctx -> {
-									send(StringArgumentType.getString(ctx, "text"));
+									submit(StringArgumentType.getString(ctx, "text"));
 									return 1;
 								}))
 						.executes(ctx -> {
@@ -83,6 +139,7 @@ public final class McChatClient implements ClientModInitializer {
 
 	private static void onJoin(Minecraft client) {
 		McChatConfig cfg = McChatConfig.load();
+		config = cfg;
 		LOG_STATE.reset(cfg.showInChatHud);
 
 		String channel = resolveChannel(client, cfg);

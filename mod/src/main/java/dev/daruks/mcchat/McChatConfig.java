@@ -25,6 +25,8 @@ public final class McChatConfig {
 	 * Mainly for testing in singleplayer; leave empty normally.
 	 */
 	public String channelOverride = "";
+	/** Convert romaji to Japanese before sending, like LunaChat. Toggled with /japanize. */
+	public boolean japanize = true;
 
 	public static Path path() {
 		return FabricLoader.getInstance().getConfigDir().resolve("mcchat.json");
@@ -49,6 +51,17 @@ public final class McChatConfig {
 		} catch (IOException | JsonParseException e) {
 			McChatClient.LOG.error("invalid config {}, using defaults", p, e);
 			return new McChatConfig();
+		}
+	}
+
+	/** Writes this config back to the file. */
+	public void save() {
+		Path p = path();
+		try {
+			Files.createDirectories(p.getParent());
+			Files.writeString(p, GSON.toJson(this), StandardCharsets.UTF_8);
+		} catch (IOException e) {
+			McChatClient.LOG.warn("could not write config {}", p, e);
 		}
 	}
 

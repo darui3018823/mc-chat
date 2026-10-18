@@ -59,7 +59,7 @@ public final class McChatScreen extends Screen {
 		int key = event.key();
 		if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
 			String text = input.getValue().trim();
-			if (!text.isEmpty() && McChatClient.send(text)) {
+			if (!text.isEmpty() && McChatClient.submit(text)) {
 				input.setValue("");
 				scroll = 0;
 			}

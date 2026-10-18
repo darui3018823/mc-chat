@@ -17,5 +17,9 @@
 	"mcchat.error.not_connected": "Not connected to MCChat.",
 	"mcchat.error.no_token": "No token set. Put your token in %s and rejoin.",
 	"mcchat.error.bad_url": "Invalid serverUrl: %s",
-	"mcchat.error.other": "Server error: %s"
+	"mcchat.error.other": "Server error: %s",
+	"mcchat.command.japanize.on": "Romaji conversion: on (e.g. ohayou -> ohayou (おはよう))",
+	"mcchat.command.japanize.off": "Romaji conversion: off",
+	"mcchat.command.japanize.usage": "Usage: /japanize [on|off]",
+	"mcchat.command.unknown": "Unknown command: /%s (type // to send a message starting with /)"
 }

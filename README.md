@@ -25,7 +25,8 @@ MC:JE + mcchat Mod ──wss──▶ Cloudflare ──▶ nginx ──▶ mccha
      "serverUrl": "wss://mcchat.daruks.com/ws",
      "token": "mcc_...",
      "showInChatHud": true,
-     "channelOverride": ""
+     "channelOverride": "",
+     "japanize": true
    }
    ```
 3. サーバーに入ると自動接続。**Y キー**（操作設定で変更可）でチャット画面を開き、Enter で送信
@@ -33,6 +34,15 @@ MC:JE + mcchat Mod ──wss──▶ Cloudflare ──▶ nginx ──▶ mccha
    - 過去ログ（直近 50 件）は Y の画面でだけ見られる。チャット欄には流さない（再接続時は切断中に届いた分だけ流す）
    - バニラのチャットが使える人は `/mcc 本文` でも送れる
    - 設定ファイルはサーバーに入るたびに読み直す
+
+### ローマ字変換（Japanize）
+
+LunaChat と同じく、ローマ字で打った文を日本語に変換して送る。`ohayougozaimasu!` は `ohayougozaimasu! (おはようございます！)` になる。
+
+- Y の画面（または `/mcc /japanize`）で `/japanize` を打つとオン・オフが切り替わる。`/japanize on|off` も可。設定は `japanize` に保存される（既定はオン）
+- 漢字への変換には Google の変換 API を使う（送る文が Google に送られる）。失敗したときはひらがなのまま送る
+- 日本語・大文字・URL を含む文は変換しない
+- `/` で始まる文を送りたいときは `//` と書く
 
 `channelOverride` を設定すると、シングルプレイを含むどのワールドでもそのチャンネルを使う（テスト用）。
 

@@ -17,5 +17,9 @@
 	"mcchat.error.not_connected": "MCChatに接続されていません。",
 	"mcchat.error.no_token": "トークンが未設定です。%s に設定してから入り直してください。",
 	"mcchat.error.bad_url": "serverUrl が不正です: %s",
-	"mcchat.error.other": "サーバーエラー: %s"
+	"mcchat.error.other": "サーバーエラー: %s",
+	"mcchat.command.japanize.on": "ローマ字変換: オン（例: ohayou → ohayou (おはよう)）",
+	"mcchat.command.japanize.off": "ローマ字変換: オフ",
+	"mcchat.command.japanize.usage": "使い方: /japanize [on|off]",
+	"mcchat.command.unknown": "不明なコマンド: /%s（/ で始まる文を送るときは // と書く）"
 }

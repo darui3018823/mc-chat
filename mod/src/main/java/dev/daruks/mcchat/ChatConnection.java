@@ -96,6 +96,10 @@ public final class ChatConnection {
 		status(Status.IDLE, "");
 	}
 
+	public synchronized boolean connected() {
+		return ws != null;
+	}
+
 	/** Queues a chat message. Returns false if not connected. */
 	public synchronized boolean send(String text) {
 		if (ws == null) return false;
