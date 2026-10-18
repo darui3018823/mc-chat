@@ -31,6 +31,13 @@ public final class ChatLog implements ChatConnection.Listener {
 	private boolean showInHud = true;
 	private Component lastNotice = null;
 	private long lastNoticeAt = 0;
+	/**
+	 * Texts we sent that the server has not answered yet, oldest first. The
+	 * server answers each send in order, either with our own msg or an error.
+	 */
+	private final Deque<String> pending = new ArrayDeque<>();
+	private String rejected = null;
+	private long rejectedAt = 0;
 
 	public void reset(boolean showInHud) {
 		lines.clear();
@@ -38,6 +45,8 @@ public final class ChatLog implements ChatConnection.Listener {
 		lastId = 0;
 		everConnected = false;
 		lastNotice = null;
+		pending.clear();
+		rejected = null;
 		this.showInHud = showInHud;
 	}
 
@@ -67,9 +76,24 @@ public final class ChatLog implements ChatConnection.Listener {
 		return lastNotice;
 	}
 
+	/** Records a text handed to the connection, to match it with the server's answer. */
+	public void sent(String text) {
+		pending.addLast(text);
+	}
+
+	/** Returns a recently rate-limited text once, so the screen can put it back. */
+	public String takeRejected() {
+		String r = rejected;
+		rejected = null;
+		if (r == null || System.currentTimeMillis() - rejectedAt > NOTICE_MILLIS) return null;
+		return r;
+	}
+
 	@Override
 	public void onStatus(ChatConnection.Status s, String detail) {
 		ChatConnection.Status prev = status;
+		// Unanswered sends on a dropped socket get no reply.
+		if (s != ChatConnection.Status.CONNECTED) pending.clear();
 		status = s;
 		statusDetail = detail == null ? "" : detail;
 		switch (s) {
@@ -118,7 +142,9 @@ public final class ChatLog implements ChatConnection.Listener {
 
 	@Override
 	public void onMessage(ChatConnection.Message m) {
-		if (channel == null || !channel.equals(m.channel()) || m.id() <= lastId) return;
+		if (channel == null || !channel.equals(m.channel())) return;
+		if (m.name().equals(myName)) pending.pollFirst();
+		if (m.id() <= lastId) return;
 		add(m);
 		toHud(m);
 	}
@@ -126,9 +152,19 @@ public final class ChatLog implements ChatConnection.Listener {
 	@Override
 	public void onError(String code) {
 		switch (code) {
-			case "rate_limited" -> notice(Component.translatable("mcchat.error.rate_limited"), ChatFormatting.YELLOW);
-			case "empty" -> {}
-			default -> notice(Component.translatable("mcchat.error.other", code), ChatFormatting.YELLOW);
+			case "rate_limited" -> {
+				String text = pending.pollFirst();
+				if (text != null) {
+					rejected = text;
+					rejectedAt = System.currentTimeMillis();
+				}
+				notice(Component.translatable("mcchat.error.rate_limited"), ChatFormatting.YELLOW);
+			}
+			case "empty" -> pending.pollFirst();
+			default -> {
+				if (!code.equals("bad_request") && !code.equals("bad_channel")) pending.pollFirst();
+				notice(Component.translatable("mcchat.error.other", code), ChatFormatting.YELLOW);
+			}
 		}
 	}
 

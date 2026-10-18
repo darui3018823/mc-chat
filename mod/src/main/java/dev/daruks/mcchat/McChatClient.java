@@ -33,7 +33,10 @@ public final class McChatClient implements ClientModInitializer {
 
 	/** Sends text to the current channel; notifies the player on failure. */
 	public static boolean send(String text) {
-		if (connection != null && connection.send(text)) return true;
+		if (connection != null && connection.send(text)) {
+			LOG_STATE.sent(text);
+			return true;
+		}
 		LOG_STATE.notice(Component.translatable("mcchat.error.not_connected"), ChatFormatting.YELLOW);
 		return false;
 	}

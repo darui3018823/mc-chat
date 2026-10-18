@@ -60,6 +60,14 @@ public final class McChatScreen extends Screen {
 		return super.keyPressed(event);
 	}
 
+	/** Puts a rate-limited message back so it does not have to be retyped. */
+	@Override
+	public void tick() {
+		super.tick();
+		String rejected = McChatClient.log().takeRejected();
+		if (rejected != null && input.getValue().isEmpty()) input.setValue(rejected);
+	}
+
 	@Override
 	public boolean isPauseScreen() {
 		return false;
