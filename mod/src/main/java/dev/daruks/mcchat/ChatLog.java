@@ -1,5 +1,8 @@
 package dev.daruks.mcchat;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -19,6 +22,7 @@ public final class ChatLog implements ChatConnection.Listener {
 	private static final int HUD_HISTORY = 10;
 	/** How long the latest notice stays visible in {@link McChatScreen}. */
 	private static final long NOTICE_MILLIS = 5000;
+	private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
 
 	private final Deque<ChatConnection.Message> lines = new ArrayDeque<>();
 	private ChatConnection.Status status = ChatConnection.Status.IDLE;
@@ -174,9 +178,11 @@ public final class ChatLog implements ChatConnection.Listener {
 		lastId = Math.max(lastId, m.id());
 	}
 
-	/** "[MCChat] name: text" with the prefix and name colored. */
+	/** "[MCChat][yyyy/MM/dd HH:mm] name: text" in local time, with the parts colored. */
 	public static Component format(ChatConnection.Message m) {
-		return prefix()
+		String time = TIME.format(Instant.ofEpochMilli(m.ts()).atZone(ZoneId.systemDefault()));
+		return Component.literal("[MCChat]").withStyle(ChatFormatting.AQUA)
+				.append(Component.literal("[" + time + "] ").withStyle(ChatFormatting.GRAY))
 				.append(Component.literal(m.name()).withStyle(ChatFormatting.YELLOW))
 				.append(Component.literal(": " + m.text()).withStyle(ChatFormatting.WHITE));
 	}
