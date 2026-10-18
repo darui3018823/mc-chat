@@ -18,7 +18,7 @@ MC:JE + mcchat Mod ──wss──▶ Cloudflare ──▶ nginx ──▶ mccha
 
 ## Mod の使い方
 
-1. `mcchat-0.1.0.jar` を Fabric API と一緒に `mods/` へ入れる（Meteor と併用可）
+1. [Releases](https://github.com/darui3018823/mc-chat/releases) から `mcchat-<version>.jar` を取得し、Fabric API と一緒に `mods/` へ入れる（Meteor と併用可）
 2. 一度起動すると `config/mcchat.json` ができるので、`token` に発行されたトークンを書く
    ```json
    {
@@ -146,6 +146,15 @@ cd mod && ./gradlew build          # build/libs/mcchat-*.jar
 ```
 
 Gradle（Loom 1.18）の実行には **Java 25** が必要（`gradle/gradle-daemon-jvm.properties` で自動選択。Mod 自体は Java 21 向け）。
+
+### リリース
+
+`mod/gradle.properties` の `version` を上げてコミットし、同じ番号のタグを push する。
+GitHub Actions（`.github/workflows/release.yml`）が jar をビルドして Release に添付する。
+
+```sh
+git tag v1.0.0 && git push origin v1.0.0
+```
 
 `mod/src/test` の `ChatConnectionIT` は、起動中の mcchat-server に対して接続処理を検証する。
 `MCCHAT_IT_URL` / `MCCHAT_IT_TOKEN_A` / `MCCHAT_IT_TOKEN_B` を設定したときだけ実行される。
