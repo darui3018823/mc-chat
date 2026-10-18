@@ -15,6 +15,8 @@ The readers are players who install the mod, not developers.
 Write in Japanese, in Markdown, starting with "## 変更点" and grouping items under "### 新機能", "### 修正", "### その他" (omit empty groups).
 Describe only what the commits say, in terms of what players see or can do. Do not invent features, numbers or reasons.
 Leave out changes that do not affect players (CI, refactoring, tests, server deployment) unless nothing else is left.
+When a later commit changes something an earlier one added, describe only the final behavior, once.
+Do not mention version numbers or requirements; the release page shows them.
 Output only the notes.'
 
 request=$(jq -n --arg system "$system" --arg tag "$tag" --arg prev "${prev:-none}" --arg details "$details" '{
