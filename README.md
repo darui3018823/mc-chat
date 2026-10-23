@@ -69,7 +69,7 @@ go run ./cmd/mcchat-server serve
 
 ### Requirements
 
-- Go 1.26+
+- Go 1.27.3+
 - Java 25 (to run Gradle / Loom 1.18; the mod itself targets Java 21)
 
 ```sh

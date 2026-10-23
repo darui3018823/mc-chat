@@ -69,7 +69,7 @@ go run ./cmd/mcchat-server serve
 
 ### 必要なもの
 
-- Go 1.26 以上
+- Go 1.27.3 以上
 - Java 25（Gradle / Loom 1.18 の実行用。Mod 自体は Java 21 向けにビルドします）
 
 ```sh
